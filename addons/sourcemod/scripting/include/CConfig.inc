@@ -258,6 +258,7 @@ methodmap CConfigCounter < CConfig
 
 		myclass.SetString("sCounter", "");
 		myclass.SetBool("bCounterReverse", false);
+		myclass.SetInt("iMode", -1);
 
 		myclass.iMethod = eConfigMethod_Counter;
 
@@ -272,6 +273,18 @@ methodmap CConfigCounter < CConfig
 	public void SetCounter(const char[] buffer)
 	{
 		this.SetString("sCounter", buffer);
+	}
+
+	property int iMode
+	{
+		public get()
+		{
+			return this.GetInt("iMode");
+		}
+		public set(int value)
+		{
+			this.SetInt("iMode", value);
+		}
 	}
 
 	property bool bCounterReverse
@@ -296,6 +309,7 @@ methodmap CConfigHPBar < CConfigCounter
 		myclass.SetString("sIterator", "");
 		myclass.SetString("sBackup", "");
 		myclass.SetBool("bIteratorReverse", false);
+		myclass.SetInt("iBarMode", -1);
 
 		myclass.iMethod = eConfigMethod_HPBar;
 
@@ -320,6 +334,18 @@ methodmap CConfigHPBar < CConfigCounter
 	public void SetBackup(const char[] buffer)
 	{
 		this.SetString("sBackup", buffer);
+	}
+
+	property int iBarMode
+	{
+		public get()
+		{
+			return this.GetInt("iBarMode");
+		}
+		public set(int value)
+		{
+			this.SetInt("iBarMode", value);
+		}
 	}
 
 	property bool bIteratorReverse

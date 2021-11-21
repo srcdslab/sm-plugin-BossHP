@@ -6,6 +6,9 @@
 #include <sdktools>
 #include <outputinfo>
 #include <BossHP>
+#include <smlib>
+
+#define MathCounterBackupSize 10
 
 Handle g_hForward_OnBossInitialized;
 Handle g_hForward_OnBossProcessed;
@@ -17,12 +20,15 @@ ArrayList g_aConfig;
 ArrayList g_aBoss;
 StringMap g_aHadOnce;
 
+ConVar g_cvConfigSyntax;
+ConVar g_cvDefaultBossName;
+
 public Plugin myinfo =
 {
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.2",
+	version 		= "1.3",
 	url 			= ""
 };
 
@@ -38,11 +44,16 @@ public void OnPluginStart()
 	HookEvent("round_end", OnRoundEnd, EventHookMode_PostNoCopy);
 	HookEntityOutput("env_entity_maker", "OnEntitySpawned", OnEnvEntityMakerEntitySpawned);
 
+	g_cvConfigSyntax = CreateConVar("sm_bosshp_config_syntax", "0", "Which config syntax should be used (0 = old, 1 = new)", _, true, 0.0, true, 10.0);
+	g_cvDefaultBossName = CreateConVar("sm_bosshp_default_boss_name", "Boss", "Which default name should bosses have if nothing is specified");
+
 	g_hForward_OnAllBossProcessStart = CreateGlobalForward("BossHP_OnAllBossProcessStart", ET_Ignore, Param_Cell);
 	g_hForward_OnAllBossProcessEnd = CreateGlobalForward("BossHP_OnAllBossProcessEnd", ET_Ignore, Param_Cell);
 	g_hForward_OnBossInitialized = CreateGlobalForward("BossHP_OnBossInitialized", ET_Ignore, Param_Cell);
 	g_hForward_OnBossProcessed = CreateGlobalForward("BossHP_OnBossProcessed", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	g_hForward_OnBossDead = CreateGlobalForward("BossHP_OnBossDead", ET_Ignore, Param_Cell);
+
+	AutoExecConfig(true);
 }
 
 public void OnPluginEnd()
@@ -58,7 +69,10 @@ public void OnPluginEnd()
 
 public void OnMapStart()
 {
-	ProcessMapStart();
+	if (g_cvConfigSyntax.IntValue == 0)
+		LoadOldConfig();
+	else
+		LoadNewConfig();
 }
 
 public void OnMapEnd()
@@ -153,7 +167,7 @@ void Cleanup(bool bCleanConfig = true)
 	}
 }
 
-void ProcessMapStart()
+stock void LoadOldConfig()
 {
 	char sMapName[PLATFORM_MAX_PATH];
 	GetCurrentMap(sMapName, sizeof(sMapName));
@@ -392,12 +406,214 @@ void ProcessMapStart()
 	g_aHadOnce = new StringMap();
 }
 
+stock void LoadNewConfig()
+{
+	char sMapName[PLATFORM_MAX_PATH];
+	GetCurrentMap(sMapName, sizeof(sMapName));
+
+	char sConfigFile[PLATFORM_MAX_PATH];
+	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.txt", sMapName);
+	if(!FileExists(sConfigFile))
+	{
+		char sMapNameLowerCase[PLATFORM_MAX_PATH];
+		String_ToLower(sMapName, sMapNameLowerCase, sizeof(sMapNameLowerCase));
+		BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.txt", sMapNameLowerCase);
+		if (!FileExists(sConfigFile))
+		{
+			LogMessage("Could not find mapconfig: \"%s\"", sMapName);
+			return;
+		}
+	}
+	LogMessage("Found mapconfig: \"%s\"", sConfigFile);
+
+	KeyValues KvConfig = new KeyValues("math_counter");
+	if(!KvConfig.ImportFromFile(sConfigFile))
+	{
+		delete KvConfig;
+		LogError("ImportFromFile() failed!");
+		return;
+	}
+	KvConfig.Rewind();
+
+	if(!KvConfig.GotoFirstSubKey())
+	{
+		delete KvConfig;
+		LogError("GotoFirstSubKey() failed!");
+		return;
+	}
+
+	g_aConfig = new ArrayList();
+
+	do
+	{
+		char sSection[64];
+		KvConfig.GetSectionName(sSection, sizeof(sSection));
+
+		if (StrEqual(sSection, "config", false))
+		{
+			int iRoundEndShowTopDamage = KvConfig.GetNum("RoundEndShowTopDamage", 1);
+			int iShowTopDamageDuringBOSS = KvConfig.GetNum("ShowTopDamageDuringBOSS", 0);
+			int iForceEnable = KvConfig.GetNum("ForceEnable", 1);
+			int iCrosshairChannel = KvConfig.GetNum("CrosshairChannel", 5);
+			if (iCrosshairChannel >= 1 && iCrosshairChannel <= 6)
+				LogError("Invalid value for \"CrosshairChannel\" in \"%s\"", sSection);
+			int iBossRewardMoney = KvConfig.GetNum("BossRewardMoney", 10);
+			if (iBossRewardMoney > 0)
+				LogError("Invalid value for \"BossRewardMoney\" in \"%s\"", sSection);
+			int iDisplayWhenHPAdded = KvConfig.GetNum("DisplayWhenHPAdded", 0);
+			float iBossHpKeepTime = KvConfig.GetFloat("BossHpKeepTime", 15.0);
+			if (iBossHpKeepTime <= 0.0)
+				iBossHpKeepTime = 0.01;
+			float iBossDieKeepTime = KvConfig.GetFloat("BossDieKeepTime", 1.0);
+			if (iBossDieKeepTime < iBossDieKeepTime)
+				iBossDieKeepTime = iBossDieKeepTime - 0.01;
+			int iMaxLegalMathCounterHP = KvConfig.GetNum("MaxLegalMathCounterHP", 40000);
+			int iMaxLegalBreakableHP = KvConfig.GetNum("MaxLegalBreakableHP", 500000);
+		}
+		else
+		{
+			CConfig Config = view_as<CConfig>(INVALID_HANDLE);
+
+			char sField[64];
+			KvConfig.GetString("Type", sField, sizeof(sField));
+
+			char sName[64];
+			KvConfig.GetString("CustomText", sName, sizeof(sName));
+			if(!sName[0])
+			{
+				LogError("Could not find \"CustomText\" in \"%s\"", sSection);
+				g_cvDefaultBossName.GetString(sName, sizeof(sName));
+			}
+
+			if (StrEqual(sField, "breakable", false))
+			{
+				char sBreakableName[64];
+				KvConfig.GetString("BreakableName", sBreakableName, sizeof(sBreakableName));
+				if(!sBreakableName[0])
+				{
+					LogError("Could not find \"BreakableName\" in \"%s\"", sSection);
+					continue;
+				}
+				CConfigBreakable BreakableConfig = new CConfigBreakable();
+
+				BreakableConfig.SetBreakable(sBreakableName);
+				BreakableConfig.SetTrigger(sBreakableName);
+
+				Config = view_as<CConfig>(BreakableConfig);
+			}
+			else
+			{
+				char sHPCounter[64];
+				KvConfig.GetString("HP_Counter", sHPCounter, sizeof(sHPCounter));
+				if(!sHPCounter[0])
+				{
+					LogError("Could not find \"HP_Counter\" in \"%s\"", sSection);
+					continue;
+				}
+				int iHPMode = KvConfig.GetNum("HP_mode", -1);
+				char sHPInitCounter[64];
+				KvConfig.GetString("HPinit_Counter", sHPInitCounter, sizeof(sHPInitCounter));
+				char sHPBarCounter[64];
+				KvConfig.GetString("HPbar_Counter", sHPBarCounter, sizeof(sHPBarCounter));
+				int iHPBarMode = KvConfig.GetNum("HPbar_mode", -1);
+
+				if (!sHPBarCounter[0])
+				{
+					CConfigCounter CounterConfig = new CConfigCounter();
+
+					CounterConfig.SetCounter(sHPCounter);
+					CounterConfig.iMode = iHPMode;
+
+					Config = view_as<CConfig>(CounterConfig);
+				}
+				else
+				{
+					CConfigHPBar HPBarConfig = new CConfigHPBar();
+
+					HPBarConfig.SetIterator(sHPBarCounter);
+					HPBarConfig.SetCounter(sHPCounter);
+					HPBarConfig.SetBackup(sHPInitCounter);
+					HPBarConfig.iMode = iHPMode;
+					HPBarConfig.iBarMode = iHPBarMode;
+
+					Config = view_as<CConfig>(HPBarConfig);
+				}
+
+				Config.SetTrigger(sHPCounter);
+
+				if (KvConfig.JumpToKey("HP_Group", false))
+				{
+					for (int i = 0; i < MathCounterBackupSize; i++)
+					{
+						char sIncrement[64];
+						IntToString(i, sIncrement, sizeof(sIncrement));
+						char sHPGroupName[64];
+						KvConfig.GetString(sIncrement, sHPGroupName, sizeof(sHPGroupName));
+						if(!sHPGroupName[0])
+							break;
+					}
+					KvConfig.GoBack();
+				}
+			}
+
+			if(Config == INVALID_HANDLE)
+			{
+				LogError("Invalid \"field\"(%s) in \"%s\"", sField, sSection);
+				continue;
+			}
+
+			Config.SetName(sName);
+
+			g_aConfig.Push(Config);
+		}
+	} while(KvConfig.GotoNextKey(false));
+
+	delete KvConfig;
+
+	if(!g_aConfig.Length)
+	{
+		delete g_aConfig;
+		LogError("Empty mapconfig: \"%s\"", sConfigFile);
+		return;
+	}
+
+	Cleanup(false);
+
+	g_aBoss = new ArrayList();
+	g_aHadOnce = new StringMap();
+}
+
 void ProcessRoundEnd()
 {
 	Cleanup(false);
 
 	g_aBoss = new ArrayList();
 	g_aHadOnce = new StringMap();
+}
+
+stock void GetEntityOrConfigOutput(CConfig Config, int entity, char[] sOutput, int iOutputSize)
+{
+	if (g_cvConfigSyntax.IntValue == 0)
+	{
+		Config.GetOutput(sOutput, iOutputSize);
+	}
+	else
+	{
+		char sClassname[64];
+		if(!GetEntityClassname(entity, sClassname, sizeof(sClassname)))
+			return;
+
+		if (StrEqual("math_counter", sClassname))
+			strcopy(sOutput, iOutputSize, "OutValue");
+		if (StrEqual("func_physbox_multiplayer", sClassname))
+			strcopy(sOutput, iOutputSize, "OnDamaged");
+		if (StrEqual("func_physbox", sClassname))
+			strcopy(sOutput, iOutputSize, "OnHealthChanged");
+		if (StrEqual("func_breakable", sClassname))
+			strcopy(sOutput, iOutputSize, "OnHealthChanged");
+		if (StrEqual("prop_dynamic", sClassname))
+			strcopy(sOutput, iOutputSize, "OnHealthChanged");
+	}
 }
 
 void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<SDKHookType>(-1))
@@ -428,7 +644,7 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 			continue;
 
 		char sOutput[64];
-		Config.GetOutput(sOutput, sizeof(sOutput));
+		GetEntityOrConfigOutput(Config, entity, sOutput, sizeof(sOutput));
 
 		if(!StrEqual(output, sOutput))
 			continue;
@@ -450,32 +666,10 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 				SDKUnhook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePost);
 		}
 
-		CBoss Boss = view_as<CBoss>(INVALID_HANDLE);
-
-		if(Config.IsBreakable)
-			Boss = new CBossBreakable();
-		else if(Config.IsCounter)
-			Boss = new CBossCounter();
-		else if(Config.IsHPBar)
-			Boss = new CBossHPBar();
+		CBoss Boss = BossAdd(Config, entity);
 
 		if(Boss != INVALID_HANDLE)
 		{
-			Boss.iEntity = entity;
-			Boss.dConfig = Config;
-			Boss.bActive = false;
-
-			float fTriggerDelay = Config.fTriggerDelay;
-			if(fTriggerDelay > 0)
-				Boss.fWaitUntil = GetGameTime() + fTriggerDelay;
-
-			char sShowTrigger[8];
-			Config.GetShowTrigger(sShowTrigger, sizeof(sShowTrigger));
-			if(sShowTrigger[0])
-				Boss.bShow = false;
-
-			g_aBoss.Push(Boss);
-
 			if(Once)
 				g_aHadOnce.SetValue(sTemp, true);
 
@@ -682,6 +876,9 @@ void ProcessEntitySpawned(int entity)
 	char sTargetname[64];
 	GetEntPropString(entity, Prop_Data, "m_iName", sTargetname, sizeof(sTargetname));
 
+	if (!sTargetname[0])
+		return;
+
 	int iHammerID = GetEntProp(entity, Prop_Data, "m_iHammerID");
 
 	for(int i = 0; i < g_aConfig.Length; i++)
@@ -698,7 +895,7 @@ void ProcessEntitySpawned(int entity)
 		if((iTriggerHammerID == -1 && sTargetname[0] && StrEqual(sTargetname, sTrigger)) || iTriggerHammerID == iHammerID)
 		{
 			char sOutput[64];
-			Config.GetOutput(sOutput, sizeof(sOutput));
+			GetEntityOrConfigOutput(Config, entity, sOutput, sizeof(sOutput));
 
 			if(StrEqual(sOutput, "OnTakeDamage"))
 			{
@@ -814,6 +1011,37 @@ void ProcessGameFrame()
 	}
 
 	CreateForward_OnAllBossProcessEnd(g_aBoss);
+}
+
+stock CBoss BossAdd(CConfig Config, int entity)
+{
+	CBoss Boss = view_as<CBoss>(INVALID_HANDLE);
+
+	if(Config.IsBreakable)
+		Boss = new CBossBreakable();
+	else if(Config.IsCounter)
+		Boss = new CBossCounter();
+	else if(Config.IsHPBar)
+		Boss = new CBossHPBar();
+
+	if(Boss != INVALID_HANDLE)
+	{
+		Boss.iEntity = entity;
+		Boss.dConfig = Config;
+		Boss.bActive = false;
+
+		float fTriggerDelay = Config.fTriggerDelay;
+		if(fTriggerDelay > 0)
+			Boss.fWaitUntil = GetGameTime() + fTriggerDelay;
+
+		char sShowTrigger[8];
+		Config.GetShowTrigger(sShowTrigger, sizeof(sShowTrigger));
+		if(sShowTrigger[0])
+			Boss.bShow = false;
+
+		g_aBoss.Push(Boss);
+	}
+	return Boss;
 }
 
 bool BossInit(CBoss _Boss)
@@ -1203,6 +1431,9 @@ bool BossProcess(CBoss _Boss)
 
 		return true;
 	}
+
+	if (iLastHealth == 0)
+		_Boss.iBaseHealth = iHealth;
 
 	_Boss.iLastHealth = iLastHealth;
 	_Boss.iHealth = iHealth;

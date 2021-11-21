@@ -13,6 +13,7 @@ methodmap CBoss < Basic
 		myclass.SetBool("bActive", false);
 		myclass.SetBool("bShow", true);
 		myclass.SetInt("iTemplateNum", -1);
+		myclass.SetInt("iBaseHealth", 0);
 		myclass.SetInt("iHealth", 0);
 		myclass.SetInt("iLastHealth", 0);
 		myclass.SetFloat("fLastChange", 0.0);
@@ -69,6 +70,18 @@ methodmap CBoss < Basic
 		public set(int value)
 		{
 			this.SetInt("iTemplateNum", value);
+		}
+	}
+
+	property int iBaseHealth
+	{
+		public get()
+		{
+			return this.GetInt("iBaseHealth");
+		}
+		public set(int value)
+		{
+			this.SetInt("iBaseHealth", value);
 		}
 	}
 
