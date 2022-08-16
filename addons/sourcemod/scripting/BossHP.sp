@@ -203,7 +203,7 @@ stock void LoadOldConfig()
 	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName);
 	if(!FileExists(sConfigFile))
 	{
-		LogError("Could not find mapconfig: \"%s\"", sConfigFile);
+		LogMessage("Could not find mapconfig: \"%s\"", sConfigFile);
 		return;
 	}
 	if (g_cvVerboseLog.IntValue > 0)
