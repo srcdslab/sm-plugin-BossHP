@@ -202,10 +202,8 @@ stock void LoadOldConfig()
 	char sConfigFile[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName);
 	if(!FileExists(sConfigFile))
-	{
-		LogError("Could not find mapconfig: \"%s\"", sConfigFile);
 		return;
-	}
+
 	if (g_cvVerboseLog.IntValue > 0)
 		LogMessage("Found mapconfig: \"%s\"", sConfigFile);
 
