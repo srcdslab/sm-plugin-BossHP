@@ -207,7 +207,7 @@ stock void LoadOldConfig()
 		return;
 	}
 	if (g_cvVerboseLog.IntValue > 0)
-		LogMessage("Found mapconfig: \"%s\"", sConfigFile);
+		LogError("Found mapconfig: \"%s\"", sConfigFile);
 
 	KeyValues KvConfig = new KeyValues("bosses");
 	if(!KvConfig.ImportFromFile(sConfigFile))
