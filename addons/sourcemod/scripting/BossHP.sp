@@ -4,8 +4,8 @@
 #include <sourcemod>
 #include <sdkhooks>
 #include <sdktools>
-#include <outputinfo>
 #include <BossHP>
+#include <outputinfo>
 #include <smlib>
 
 #define MathCounterBackupSize 10
