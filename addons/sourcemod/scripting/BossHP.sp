@@ -29,7 +29,7 @@ public Plugin myinfo =
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.3",
+	version 		= "1.3.2",
 	url 			= ""
 };
 
@@ -44,6 +44,8 @@ public void OnPluginStart()
 {
 	HookEvent("round_end", OnRoundEnd, EventHookMode_PostNoCopy);
 	HookEntityOutput("env_entity_maker", "OnEntitySpawned", OnEnvEntityMakerEntitySpawned);
+
+	RegAdminCmd("sm_bosshp_reload", Command_ReloadConfig, ADMFLAG_CONFIG, "Reload the BossHP Map Config File.");
 
 	g_cvConfigSyntax = CreateConVar("sm_bosshp_config_syntax", "0", "Which config syntax should be used (0 = old, 1 = new)", _, true, 0.0, true, 10.0);
 	g_cvDefaultBossName = CreateConVar("sm_bosshp_default_boss_name", "Boss", "Which default name should bosses have if nothing is specified");
@@ -155,6 +157,13 @@ public void OnTakeDamagePostKill(int victim, int attacker, int inflictor, float 
 public void OnGameFrame()
 {
 	ProcessGameFrame();
+}
+
+public Action Command_ReloadConfig(int client, int args)
+{
+	OnMapStart();
+	ReplyToCommand(client, "[BossHP] Map config file has been reloaded.");
+	return Plugin_Handled;
 }
 
 // ######## ##     ## ##    ##  ######  ######## ####  #######  ##    ##  ######  
