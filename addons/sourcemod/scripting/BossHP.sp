@@ -23,7 +23,6 @@ StringMap g_aHadOnce = null;
 ConVar g_cvConfigSyntax;
 ConVar g_cvDefaultBossName;
 ConVar g_cvVerboseLog;
-ConVar g_cvLowercase;
 
 public Plugin myinfo =
 {
@@ -48,10 +47,9 @@ public void OnPluginStart()
 
 	RegAdminCmd("sm_bosshp_reload", Command_ReloadConfig, ADMFLAG_CONFIG, "Reload the BossHP Map Config File.");
 
-	g_cvConfigSyntax = CreateConVar("sm_bosshp_config_syntax", "0", "Which config syntax should be used (0 = old, 1 = new)", _, true, 0.0, true, 10.0);
+	g_cvConfigSyntax = CreateConVar("sm_bosshp_config_syntax", "0", "Which config syntax should be used (0 = old, 1 = new)", _, true, 0.0, true, 1.0);
 	g_cvDefaultBossName = CreateConVar("sm_bosshp_default_boss_name", "Boss", "Which default name should bosses have if nothing is specified");
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 10.0);
-	g_cvLowercase = CreateConVar("sm_bosshp_lowercase", "0", "Should the map name be lowercase? (0 = no, 1 = yes)", _, true, 0.0, true, 1.0);
 
 	g_hForward_OnAllBossProcessStart = CreateGlobalForward("BossHP_OnAllBossProcessStart", ET_Ignore, Param_Cell);
 	g_hForward_OnAllBossProcessEnd = CreateGlobalForward("BossHP_OnAllBossProcessEnd", ET_Ignore, Param_Cell);
@@ -207,17 +205,18 @@ void Cleanup(bool bCleanConfig = true)
 
 stock void LoadOldConfig()
 {
-	char sMapName[PLATFORM_MAX_PATH];
+	char sMapName[PLATFORM_MAX_PATH], sMapName_lower[PLATFORM_MAX_PATH];
 	GetCurrentMap(sMapName, sizeof(sMapName));
-
-	if (g_cvLowercase.BoolValue)
-		String_ToLower(sMapName, sMapName, sizeof(sMapName));
+	String_ToLower(sMapName, sMapName_lower, sizeof(sMapName_lower));
 
 	char sConfigFile[PLATFORM_MAX_PATH], sConfigFile_override[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName);
 	BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/bosshp/%s_override.cfg", sMapName);
 
 	KeyValues KvConfig = new KeyValues("bosses");
+
+	if (!FileExists(sConfigFile_override))
+		BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/bosshp/%s_override.cfg", sMapName_lower);
 
 	if (FileExists(sConfigFile_override))
 	{
@@ -231,6 +230,9 @@ stock void LoadOldConfig()
 	}
 	else
 	{
+		if (!FileExists(sConfigFile))
+			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName_lower);
+
 		if(!KvConfig.ImportFromFile(sConfigFile))
 		{
 			LogMessage("Unable to load config: \"%s\"", sConfigFile);
@@ -460,17 +462,18 @@ stock void LoadOldConfig()
 
 stock void LoadNewConfig()
 {
-	char sMapName[PLATFORM_MAX_PATH];
+	char sMapName[PLATFORM_MAX_PATH], sMapName_lower[PLATFORM_MAX_PATH];
 	GetCurrentMap(sMapName, sizeof(sMapName));
-
-	if (g_cvLowercase.BoolValue)
-		String_ToLower(sMapName, sMapName, sizeof(sMapName));
+	String_ToLower(sMapName, sMapName_lower, sizeof(sMapName_lower));
 
 	char sConfigFile[PLATFORM_MAX_PATH], sConfigFile_override[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.cfg", sMapName);
 	BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/MapBossHP/%s_override.cfg", sMapName);
 
 	KeyValues KvConfig = new KeyValues("math_counter");
+
+	if (!FileExists(sConfigFile_override))
+		BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/MapBossHP/%s_override.cfg", sMapName_lower);
 
 	if (FileExists(sConfigFile_override))
 	{
@@ -484,6 +487,9 @@ stock void LoadNewConfig()
 	}
 	else
 	{
+		if (!FileExists(sConfigFile))
+			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.cfg", sMapName_lower);
+
 		if(!KvConfig.ImportFromFile(sConfigFile))
 		{
 			LogMessage("Unable to load config: \"%s\"", sConfigFile);
