@@ -226,7 +226,11 @@ stock void LoadOldConfig()
 			delete KvConfig;
 			return;
 		}
-		else if(g_cvVerboseLog.IntValue > 0) LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
+		else
+		{
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
+		}
 	}
 	else
 	{
@@ -239,7 +243,11 @@ stock void LoadOldConfig()
 			delete KvConfig;
 			return;
 		}
-		else if(g_cvVerboseLog.IntValue > 0) LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+		else
+		{
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+		}
 	}
 
 	KvConfig.Rewind();
@@ -483,7 +491,11 @@ stock void LoadNewConfig()
 			delete KvConfig;
 			return;
 		}
-		else if(g_cvVerboseLog.IntValue > 0) LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
+		else
+		{
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
+		}
 	}
 	else
 	{
@@ -496,7 +508,11 @@ stock void LoadNewConfig()
 			delete KvConfig;
 			return;
 		}
-		else if(g_cvVerboseLog.IntValue > 0) LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+		else
+		{
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+		}
 	}
 	KvConfig.Rewind();
 
