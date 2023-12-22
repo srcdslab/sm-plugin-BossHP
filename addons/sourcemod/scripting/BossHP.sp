@@ -29,7 +29,7 @@ public Plugin myinfo =
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.3.2",
+	version 		= "1.3.3",
 	url 			= ""
 };
 
@@ -47,7 +47,7 @@ public void OnPluginStart()
 
 	RegAdminCmd("sm_bosshp_reload", Command_ReloadConfig, ADMFLAG_CONFIG, "Reload the BossHP Map Config File.");
 
-	g_cvConfigSyntax = CreateConVar("sm_bosshp_config_syntax", "0", "Which config syntax should be used (0 = old, 1 = new)", _, true, 0.0, true, 10.0);
+	g_cvConfigSyntax = CreateConVar("sm_bosshp_config_syntax", "0", "Which config syntax should be used (0 = old, 1 = new)", _, true, 0.0, true, 1.0);
 	g_cvDefaultBossName = CreateConVar("sm_bosshp_default_boss_name", "Boss", "Which default name should bosses have if nothing is specified");
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 10.0);
 
@@ -71,7 +71,7 @@ public void OnPluginEnd()
 	CloseHandle(g_hForward_OnBossDead);
 }
 
-public void OnMapStart()
+public void OnConfigsExecuted()
 {
 	if (g_cvConfigSyntax.IntValue == 0)
 		LoadOldConfig();
@@ -161,7 +161,7 @@ public void OnGameFrame()
 
 public Action Command_ReloadConfig(int client, int args)
 {
-	OnMapStart();
+	OnConfigsExecuted();
 	ReplyToCommand(client, "[BossHP] Map config file has been reloaded.");
 	return Plugin_Handled;
 }
@@ -205,24 +205,51 @@ void Cleanup(bool bCleanConfig = true)
 
 stock void LoadOldConfig()
 {
-	char sMapName[PLATFORM_MAX_PATH];
+	char sMapName[PLATFORM_MAX_PATH], sMapName_lower[PLATFORM_MAX_PATH];
 	GetCurrentMap(sMapName, sizeof(sMapName));
+	String_ToLower(sMapName, sMapName_lower, sizeof(sMapName_lower));
 
-	char sConfigFile[PLATFORM_MAX_PATH];
+	char sConfigFile[PLATFORM_MAX_PATH], sConfigFile_override[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName);
-	if(!FileExists(sConfigFile))
-		return;
-
-	if (g_cvVerboseLog.IntValue > 0)
-		LogMessage("Found mapconfig: \"%s\"", sConfigFile);
+	BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/bosshp/%s_override.cfg", sMapName);
 
 	KeyValues KvConfig = new KeyValues("bosses");
-	if(!KvConfig.ImportFromFile(sConfigFile))
+
+	if (!FileExists(sConfigFile_override))
+		BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/bosshp/%s_override.cfg", sMapName_lower);
+
+	if (FileExists(sConfigFile_override))
 	{
-		delete KvConfig;
-		LogError("ImportFromFile() failed!");
-		return;
+		if(!KvConfig.ImportFromFile(sConfigFile_override))
+		{
+			LogMessage("Unable to load config override: \"%s\"", sConfigFile_override);
+			delete KvConfig;
+			return;
+		}
+		else
+		{
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
+		}
 	}
+	else
+	{
+		if (!FileExists(sConfigFile))
+			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName_lower);
+
+		if(!KvConfig.ImportFromFile(sConfigFile))
+		{
+			LogMessage("Unable to load config: \"%s\"", sConfigFile);
+			delete KvConfig;
+			return;
+		}
+		else
+		{
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+		}
+	}
+
 	KvConfig.Rewind();
 
 	if(!KvConfig.GotoFirstSubKey())
@@ -443,31 +470,49 @@ stock void LoadOldConfig()
 
 stock void LoadNewConfig()
 {
-	char sMapName[PLATFORM_MAX_PATH];
+	char sMapName[PLATFORM_MAX_PATH], sMapName_lower[PLATFORM_MAX_PATH];
 	GetCurrentMap(sMapName, sizeof(sMapName));
+	String_ToLower(sMapName, sMapName_lower, sizeof(sMapName_lower));
 
-	char sConfigFile[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.txt", sMapName);
-	if(!FileExists(sConfigFile))
-	{
-		char sMapNameLowerCase[PLATFORM_MAX_PATH];
-		String_ToLower(sMapName, sMapNameLowerCase, sizeof(sMapNameLowerCase));
-		BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.txt", sMapNameLowerCase);
-		if (!FileExists(sConfigFile))
-		{
-			LogError("Could not find mapconfig: \"%s\"", sMapName);
-			return;
-		}
-	}
-	if (g_cvVerboseLog.IntValue > 0)
-		LogMessage("Found mapconfig: \"%s\"", sConfigFile);
+	char sConfigFile[PLATFORM_MAX_PATH], sConfigFile_override[PLATFORM_MAX_PATH];
+	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.cfg", sMapName);
+	BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/MapBossHP/%s_override.cfg", sMapName);
 
 	KeyValues KvConfig = new KeyValues("math_counter");
-	if(!KvConfig.ImportFromFile(sConfigFile))
+
+	if (!FileExists(sConfigFile_override))
+		BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/MapBossHP/%s_override.cfg", sMapName_lower);
+
+	if (FileExists(sConfigFile_override))
 	{
-		delete KvConfig;
-		LogError("ImportFromFile() failed!");
-		return;
+		if(!KvConfig.ImportFromFile(sConfigFile_override))
+		{
+			LogMessage("Unable to load config override: \"%s\"", sConfigFile_override);
+			delete KvConfig;
+			return;
+		}
+		else
+		{
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
+		}
+	}
+	else
+	{
+		if (!FileExists(sConfigFile))
+			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.cfg", sMapName_lower);
+
+		if(!KvConfig.ImportFromFile(sConfigFile))
+		{
+			LogMessage("Unable to load config: \"%s\"", sConfigFile);
+			delete KvConfig;
+			return;
+		}
+		else
+		{
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+		}
 	}
 	KvConfig.Rewind();
 
