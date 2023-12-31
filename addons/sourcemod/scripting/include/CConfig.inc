@@ -33,6 +33,7 @@ methodmap CConfig < Basic
 		myclass.SetBool("bMultiTrigger", false);
 		myclass.SetBool("bNameFixup", false);
 		myclass.SetBool("bIgnore", false);
+		myclass.SetBool("bShowBeaten", false);
 		myclass.SetFloat("fTimeout", -1.0);
 
 		return view_as<CConfig>(myclass);
@@ -189,6 +190,18 @@ methodmap CConfig < Basic
 		public set(bool value)
 		{
 			this.SetBool("bIgnore", value);
+		}
+	}
+
+	property bool bShowBeaten
+	{
+		public get()
+		{
+			return this.GetBool("bShowBeaten");
+		}
+		public set(bool value)
+		{
+			this.SetBool("bShowBeaten", value);
 		}
 	}
 
