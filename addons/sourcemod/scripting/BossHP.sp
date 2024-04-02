@@ -41,9 +41,9 @@ public Plugin myinfo =
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
-   CreateNative("BossHP_IsBossEnt", Native_IsBossEntity);
-   RegPluginLibrary("BossHP");
-   return APLRes_Success;
+	CreateNative("BossHP_IsBossEnt", Native_IsBossEntity);
+	RegPluginLibrary("BossHP");
+return APLRes_Success;
 }
 
 public void OnPluginStart()
@@ -274,21 +274,18 @@ stock void LoadOldConfig()
 		if (!FileExists(sConfigFile))
 			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName_lower);
 
-		if (FileExists(sConfigFile))
+		if(!KvConfig.ImportFromFile(sConfigFile))
 		{
-			if(!KvConfig.ImportFromFile(sConfigFile))
-			{
-				LogMessage("Unable to load config: \"%s\"", sConfigFile);
-				delete KvConfig;
-				return;
-			}
-			else
-			{
-				g_bConfigLoaded = true;
-				g_sConfigLoaded = sConfigFile;
-				if (g_cvVerboseLog.IntValue > 0)
-					LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
-			}
+			LogMessage("Unable to load config: \"%s\"", sConfigFile);
+			delete KvConfig;
+			return;
+		}
+		else
+		{
+			g_bConfigLoaded = true;
+			g_sConfigLoaded = sConfigFile;
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
 		}
 	}
 
@@ -563,21 +560,18 @@ stock void LoadNewConfig()
 		if (!FileExists(sConfigFile))
 			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.cfg", sMapName_lower);
 
-		if (FileExists(sConfigFile))
+		if(!KvConfig.ImportFromFile(sConfigFile))
 		{
-			if(!KvConfig.ImportFromFile(sConfigFile))
-			{
-				LogMessage("Unable to load config: \"%s\"", sConfigFile);
-				delete KvConfig;
-				return;
-			}
-			else
-			{
-				g_bConfigLoaded = true;
-				g_sConfigLoaded = sConfigFile;
-				if (g_cvVerboseLog.IntValue > 0)
-					LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
-			}
+			LogMessage("Unable to load config: \"%s\"", sConfigFile);
+			delete KvConfig;
+			return;
+		}
+		else
+		{
+			g_bConfigLoaded = true;
+			g_sConfigLoaded = sConfigFile;
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
 		}
 	}
 	KvConfig.Rewind();
