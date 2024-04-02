@@ -7,6 +7,7 @@
 #include <BossHP>
 #include <outputinfo>
 #include <smlib>
+#include <multicolors>
 
 #define MathCounterBackupSize 10
 
@@ -24,12 +25,17 @@ ConVar g_cvConfigSyntax;
 ConVar g_cvDefaultBossName;
 ConVar g_cvVerboseLog;
 
+char g_sConfigLoaded[PLATFORM_MAX_PATH];
+
+bool g_bConfigLoaded = false;
+bool g_bConfigError = false;
+
 public Plugin myinfo =
 {
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.3.4",
+	version 		= "1.3.5",
 	url 			= ""
 };
 
@@ -42,10 +48,12 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
+	HookEvent("round_start", OnRoundStart, EventHookMode_PostNoCopy);
 	HookEvent("round_end", OnRoundEnd, EventHookMode_PostNoCopy);
 	HookEntityOutput("env_entity_maker", "OnEntitySpawned", OnEnvEntityMakerEntitySpawned);
 
 	RegAdminCmd("sm_bosshp_reload", Command_ReloadConfig, ADMFLAG_CONFIG, "Reload the BossHP Map Config File.");
+	RegAdminCmd("sm_bosshp", Command_IsConfigLoaded, ADMFLAG_GENERIC, "Check if the BossHP Map Config File is loaded.");
 
 	g_cvConfigSyntax = CreateConVar("sm_bosshp_config_syntax", "0", "Which config syntax should be used (0 = old, 1 = new)", _, true, 0.0, true, 1.0);
 	g_cvDefaultBossName = CreateConVar("sm_bosshp_default_boss_name", "Boss", "Which default name should bosses have if nothing is specified");
@@ -73,6 +81,9 @@ public void OnPluginEnd()
 
 public void OnConfigsExecuted()
 {
+	g_bConfigLoaded = false;
+	g_bConfigError = false;
+
 	if (g_cvConfigSyntax.IntValue == 0)
 		LoadOldConfig();
 	else
@@ -82,6 +93,12 @@ public void OnConfigsExecuted()
 public void OnMapEnd()
 {
 	Cleanup();
+}
+
+public void OnRoundStart(Event event, const char[] name, bool dontBroadcast)
+{
+	if (g_bConfigLoaded && g_cvVerboseLog.IntValue > 0)
+		CPrintToChatAll("{lightgreen}[BossHP]{default} The current map is supported by this plugin.");
 }
 
 public void OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
@@ -159,6 +176,24 @@ public void OnGameFrame()
 	ProcessGameFrame();
 }
 
+public Action Command_IsConfigLoaded(int client, int args)
+{
+	if (!g_bConfigLoaded)
+		CReplyToCommand(client, "{lightgreen}[BossHP]{default} Map config file is {red}not loaded.");
+	else
+	{
+		if (!g_bConfigError)
+			CReplyToCommand(client, "{lightgreen}[BossHP]{default} Map config file {green}is loaded.");
+		else
+			CReplyToCommand(client, "{lightgreen}[BossHP]{default} Map config file is {green}loaded {fullred}but has errors.");
+
+		if (CheckCommandAccess(client, "sm_bosshp", ADMFLAG_ROOT))
+			CReplyToCommand(client, "{lightgreen}[BossHP]{default} Actual cfg: {olive}%s", g_sConfigLoaded);
+	}
+
+	return Plugin_Handled;
+}
+
 public Action Command_ReloadConfig(int client, int args)
 {
 	OnConfigsExecuted();
@@ -228,6 +263,8 @@ stock void LoadOldConfig()
 		}
 		else
 		{
+			g_bConfigLoaded = true;
+			g_sConfigLoaded = sConfigFile_override;
 			if (g_cvVerboseLog.IntValue > 0)
 				LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
 		}
@@ -237,16 +274,21 @@ stock void LoadOldConfig()
 		if (!FileExists(sConfigFile))
 			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName_lower);
 
-		if(!KvConfig.ImportFromFile(sConfigFile))
+		if (FileExists(sConfigFile))
 		{
-			LogMessage("Unable to load config: \"%s\"", sConfigFile);
-			delete KvConfig;
-			return;
-		}
-		else
-		{
-			if (g_cvVerboseLog.IntValue > 0)
-				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+			if(!KvConfig.ImportFromFile(sConfigFile))
+			{
+				LogMessage("Unable to load config: \"%s\"", sConfigFile);
+				delete KvConfig;
+				return;
+			}
+			else
+			{
+				g_bConfigLoaded = true;
+				g_sConfigLoaded = sConfigFile;
+				if (g_cvVerboseLog.IntValue > 0)
+					LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+			}
 		}
 	}
 
@@ -255,6 +297,7 @@ stock void LoadOldConfig()
 	if(!KvConfig.GotoFirstSubKey())
 	{
 		delete KvConfig;
+		g_bConfigError = true;
 		LogError("GotoFirstSubKey() failed!");
 		return;
 	}
@@ -270,6 +313,7 @@ stock void LoadOldConfig()
 		KvConfig.GetString("name", sName, sizeof(sName));
 		if(!sName[0])
 		{
+			g_bConfigError = true;
 			LogError("Could not find \"name\" in \"%s\"", sSection);
 			continue;
 		}
@@ -278,6 +322,7 @@ stock void LoadOldConfig()
 		KvConfig.GetString("method", sMethod, sizeof(sMethod));
 		if(!sMethod[0])
 		{
+			g_bConfigError = true;
 			LogError("Could not find \"method\" in \"%s\"", sSection);
 			continue;
 		}
@@ -286,6 +331,7 @@ stock void LoadOldConfig()
 		KvConfig.GetString("trigger", sTrigger, sizeof(sTrigger));
 		if(!sTrigger[0])
 		{
+			g_bConfigError = true;
 			LogError("Could not find \"trigger\" in \"%s\"", sSection);
 			continue;
 		}
@@ -293,6 +339,7 @@ stock void LoadOldConfig()
 		int iTriggerDelim;
 		if((iTriggerDelim = FindCharInString(sTrigger, ':')) == -1)
 		{
+			g_bConfigError = true;
 			LogError("Delimiter ':' not found in \"trigger\"(%s) in \"%s\"", sTrigger, sSection);
 			continue;
 		}
@@ -316,6 +363,7 @@ stock void LoadOldConfig()
 		{
 			if((iShowTriggerDelim = FindCharInString(sShowTrigger, ':')) == -1)
 			{
+				g_bConfigError = true;
 				LogError("Delimiter ':' not found in \"showtrigger\"(%s) in \"%s\"", sShowTrigger, sSection);
 				continue;
 			}
@@ -338,6 +386,7 @@ stock void LoadOldConfig()
 		{
 			if((iKillTriggerDelim = FindCharInString(sKillTrigger, ':')) == -1)
 			{
+				g_bConfigError = true;
 				LogError("Delimiter ':' not found in \"killtrigger\"(%s) in \"%s\"", sKillTrigger, sSection);
 				continue;
 			}
@@ -360,11 +409,12 @@ stock void LoadOldConfig()
 
 		CConfig Config = view_as<CConfig>(INVALID_HANDLE);
 
-		if(StrEqual(sMethod, "breakable"))
+		if(strcmp(sMethod, "breakable", false) == 0)
 		{
 			char sBreakable[64];
 			if(!KvConfig.GetString("breakable", sBreakable, sizeof(sBreakable)))
 			{
+				g_bConfigError = true;
 				LogError("Could not find \"breakable\" in \"%s\"", sSection);
 				continue;
 			}
@@ -375,11 +425,12 @@ stock void LoadOldConfig()
 
 			Config = view_as<CConfig>(BreakableConfig);
 		}
-		else if(StrEqual(sMethod, "counter"))
+		else if(strcmp(sMethod, "counter", false) == 0)
 		{
 			char sCounter[64];
 			if(!KvConfig.GetString("counter", sCounter, sizeof(sCounter)))
 			{
+				g_bConfigError = true;
 				LogError("Could not find \"counter\" in \"%s\"", sSection);
 				continue;
 			}
@@ -390,11 +441,12 @@ stock void LoadOldConfig()
 
 			Config = view_as<CConfig>(CounterConfig);
 		}
-		else if(StrEqual(sMethod, "hpbar"))
+		else if(strcmp(sMethod, "hpbar", false) == 0)
 		{
 			char sIterator[64];
 			if(!KvConfig.GetString("iterator", sIterator, sizeof(sIterator)))
 			{
+				g_bConfigError = true;
 				LogError("Could not find \"iterator\" in \"%s\"", sSection);
 				continue;
 			}
@@ -402,6 +454,7 @@ stock void LoadOldConfig()
 			char sCounter[64];
 			if(!KvConfig.GetString("counter", sCounter, sizeof(sCounter)))
 			{
+				g_bConfigError = true;
 				LogError("Could not find \"counter\" in \"%s\"", sSection);
 				continue;
 			}
@@ -409,6 +462,7 @@ stock void LoadOldConfig()
 			char sBackup[64];
 			if(!KvConfig.GetString("backup", sBackup, sizeof(sBackup)))
 			{
+				g_bConfigError = true;
 				LogError("Could not find \"backup\" in \"%s\"", sSection);
 				continue;
 			}
@@ -424,6 +478,7 @@ stock void LoadOldConfig()
 
 		if(Config == INVALID_HANDLE)
 		{
+			g_bConfigError = true;
 			LogError("Invalid \"method\"(%s) in \"%s\"", sMethod, sSection);
 			continue;
 		}
@@ -461,6 +516,7 @@ stock void LoadOldConfig()
 	if(!g_aConfig.Length)
 	{
 		delete g_aConfig;
+		g_bConfigError = true;
 		LogError("Empty mapconfig: \"%s\"", sConfigFile);
 		return;
 	}
@@ -496,6 +552,8 @@ stock void LoadNewConfig()
 		}
 		else
 		{
+			g_bConfigLoaded = true;
+			g_sConfigLoaded = sConfigFile_override;
 			if (g_cvVerboseLog.IntValue > 0)
 				LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
 		}
@@ -505,16 +563,21 @@ stock void LoadNewConfig()
 		if (!FileExists(sConfigFile))
 			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.cfg", sMapName_lower);
 
-		if(!KvConfig.ImportFromFile(sConfigFile))
+		if (FileExists(sConfigFile))
 		{
-			LogMessage("Unable to load config: \"%s\"", sConfigFile);
-			delete KvConfig;
-			return;
-		}
-		else
-		{
-			if (g_cvVerboseLog.IntValue > 0)
-				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+			if(!KvConfig.ImportFromFile(sConfigFile))
+			{
+				LogMessage("Unable to load config: \"%s\"", sConfigFile);
+				delete KvConfig;
+				return;
+			}
+			else
+			{
+				g_bConfigLoaded = true;
+				g_sConfigLoaded = sConfigFile;
+				if (g_cvVerboseLog.IntValue > 0)
+					LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
+			}
 		}
 	}
 	KvConfig.Rewind();
@@ -522,6 +585,7 @@ stock void LoadNewConfig()
 	if(!KvConfig.GotoFirstSubKey())
 	{
 		delete KvConfig;
+		g_bConfigError = true;
 		LogError("GotoFirstSubKey() failed!");
 		return;
 	}
@@ -533,17 +597,23 @@ stock void LoadNewConfig()
 		char sSection[64];
 		KvConfig.GetSectionName(sSection, sizeof(sSection));
 
-		if (StrEqual(sSection, "config", false))
+		if (strcmp(sSection, "config", false) == 0)
 		{
 			int iRoundEndShowTopDamage = KvConfig.GetNum("RoundEndShowTopDamage", 1);
 			int iShowTopDamageDuringBOSS = KvConfig.GetNum("ShowTopDamageDuringBOSS", 0);
 			int iForceEnable = KvConfig.GetNum("ForceEnable", 1);
 			int iCrosshairChannel = KvConfig.GetNum("CrosshairChannel", 5);
 			if (iCrosshairChannel >= 1 && iCrosshairChannel <= 6)
+			{
+				g_bConfigError = true;
 				LogError("Invalid value for \"CrosshairChannel\" in \"%s\"", sSection);
+			}
 			int iBossRewardMoney = KvConfig.GetNum("BossRewardMoney", 10);
 			if (iBossRewardMoney > 0)
+			{
+				g_bConfigError = true;
 				LogError("Invalid value for \"BossRewardMoney\" in \"%s\"", sSection);
+			}
 			int iDisplayWhenHPAdded = KvConfig.GetNum("DisplayWhenHPAdded", 0);
 			float iBossHpKeepTime = KvConfig.GetFloat("BossHpKeepTime", 15.0);
 			if (iBossHpKeepTime <= 0.0)
@@ -566,16 +636,18 @@ stock void LoadNewConfig()
 			KvConfig.GetString("CustomText", sName, sizeof(sName));
 			if(!sName[0])
 			{
+				g_bConfigError = true;
 				LogError("Could not find \"CustomText\" in \"%s\"", sSection);
 				g_cvDefaultBossName.GetString(sName, sizeof(sName));
 			}
 
-			if (StrEqual(sField, "breakable", false))
+			if (strcmp(sField, "breakable", false) == 0)
 			{
 				char sBreakableName[64];
 				KvConfig.GetString("BreakableName", sBreakableName, sizeof(sBreakableName));
 				if(!sBreakableName[0])
 				{
+					g_bConfigError = true;
 					LogError("Could not find \"BreakableName\" in \"%s\"", sSection);
 					continue;
 				}
@@ -592,6 +664,7 @@ stock void LoadNewConfig()
 				KvConfig.GetString("HP_Counter", sHPCounter, sizeof(sHPCounter));
 				if(!sHPCounter[0])
 				{
+					g_bConfigError = true;
 					LogError("Could not find \"HP_Counter\" in \"%s\"", sSection);
 					continue;
 				}
@@ -643,6 +716,7 @@ stock void LoadNewConfig()
 
 			if(Config == INVALID_HANDLE)
 			{
+				g_bConfigError = true;
 				LogError("Invalid \"field\"(%s) in \"%s\"", sField, sSection);
 				continue;
 			}
@@ -658,6 +732,7 @@ stock void LoadNewConfig()
 	if(!g_aConfig.Length)
 	{
 		delete g_aConfig;
+		g_bConfigError = true;
 		LogError("Empty mapconfig: \"%s\"", sConfigFile);
 		return;
 	}
@@ -688,15 +763,15 @@ stock void GetEntityOrConfigOutput(CConfig Config, int entity, char[] sOutput, i
 		if(!GetEntityClassname(entity, sClassname, sizeof(sClassname)))
 			return;
 
-		if (StrEqual("math_counter", sClassname))
+		if (strcmp("math_counter", sClassname, false) == 0)
 			strcopy(sOutput, iOutputSize, "OutValue");
-		if (StrEqual("func_physbox_multiplayer", sClassname))
+		if (strcmp("func_physbox_multiplayer", sClassname, false) == 0)
 			strcopy(sOutput, iOutputSize, "OnDamaged");
-		if (StrEqual("func_physbox", sClassname))
+		if (strcmp("func_physbox", sClassname, false) == 0)
 			strcopy(sOutput, iOutputSize, "OnHealthChanged");
-		if (StrEqual("func_breakable", sClassname))
+		if (strcmp("func_breakable", sClassname, false) == 0)
 			strcopy(sOutput, iOutputSize, "OnHealthChanged");
-		if (StrEqual("prop_dynamic", sClassname))
+		if (strcmp("prop_dynamic", sClassname, false) == 0)
 			strcopy(sOutput, iOutputSize, "OnHealthChanged");
 	}
 }
@@ -726,13 +801,13 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 			if(iTriggerHammerID != iHammerID)
 				continue;
 		}
-		else if(!sTargetname[0] || !StrEqual(sTargetname, sTrigger))
+		else if(!sTargetname[0] || strcmp(sTargetname, sTrigger, false) != 0)
 			continue;
 
 		char sOutput[64];
 		GetEntityOrConfigOutput(Config, entity, sOutput, sizeof(sOutput));
 
-		if(!StrEqual(output, sOutput))
+		if(strcmp(output, sOutput, false) != 0)
 			continue;
 
 		bool Once = !Config.bMultiTrigger;
@@ -803,13 +878,13 @@ void OnShowTrigger(int entity, const char[] output, SDKHookType HookType = view_
 			if(iShowTriggerHammerID != iHammerID)
 				continue;
 		}
-		else if(!sTargetname[0] || !StrEqual(sTargetname, sShowTrigger))
+		else if(!sTargetname[0] || strcmp(sTargetname, sShowTrigger, false) != 0)
 			continue;
 
 		char sShowOutput[64];
 		Config.GetShowOutput(sShowOutput, sizeof(sShowOutput));
 
-		if(!StrEqual(output, sShowOutput))
+		if(strcmp(output, sShowOutput, false) != 0)
 			continue;
 
 		if (g_cvVerboseLog.IntValue > 0)
@@ -887,13 +962,13 @@ void OnKillTrigger(int entity, const char[] output, SDKHookType HookType = view_
 			if(iKillTriggerHammerID != iHammerID)
 				continue;
 		}
-		else if(!sTargetname[0] || !StrEqual(sTargetname, sKillTrigger))
+		else if(!sTargetname[0] || strcmp(sTargetname, sKillTrigger, false) != 0)
 			continue;
 
 		char sKillOutput[64];
 		Config.GetKillOutput(sKillOutput, sizeof(sKillOutput));
 
-		if(!StrEqual(output, sKillOutput))
+		if(strcmp(output, sKillOutput, false) != 0)
 			continue;
 
 		if (g_cvVerboseLog.IntValue > 0)
@@ -949,8 +1024,9 @@ void ProcessEnvEntityMakerEntitySpawned(const char[] output, int caller, int act
 	if(!GetEntityClassname(caller, sClassname, sizeof(sClassname)))
 		return;
 
-	if(!StrEqual(sClassname, "env_entity_maker"))
+	if(strcmp(sClassname, "env_entity_maker", false) != 0)
 	{
+		g_bConfigError = true;
 		LogError("[SOURCEMOD BUG] output: \"%s\", caller: %d, activator: %d, delay: %f, classname: \"%s\"",
 			output, caller, activator, delay, sClassname);
 		return;
@@ -994,12 +1070,12 @@ void ProcessEntitySpawned(int entity)
 		if(sTrigger[0] == '#')
 			iTriggerHammerID = StringToInt(sTrigger[1]);
 
-		if((iTriggerHammerID == -1 && sTargetname[0] && StrEqual(sTargetname, sTrigger)) || iTriggerHammerID == iHammerID)
+		if((iTriggerHammerID == -1 && sTargetname[0] && strcmp(sTargetname, sTrigger, false) == 0) || iTriggerHammerID == iHammerID)
 		{
 			char sOutput[64];
 			GetEntityOrConfigOutput(Config, entity, sOutput, sizeof(sOutput));
 
-			if(StrEqual(sOutput, "OnTakeDamage"))
+			if(strcmp(sOutput, "OnTakeDamage", false) == 0)
 			{
 				SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePost);
 			}
@@ -1020,12 +1096,12 @@ void ProcessEntitySpawned(int entity)
 		if(sShowTrigger[0] == '#')
 			iShowTriggerHammerID = StringToInt(sShowTrigger[1]);
 
-		if((iShowTriggerHammerID == -1 && sShowTrigger[0] && StrEqual(sTargetname, sShowTrigger)) || iShowTriggerHammerID == iHammerID)
+		if((iShowTriggerHammerID == -1 && sShowTrigger[0] && strcmp(sTargetname, sShowTrigger, false) == 0) || iShowTriggerHammerID == iHammerID)
 		{
 			char sShowOutput[64];
 			Config.GetShowOutput(sShowOutput, sizeof(sShowOutput));
 
-			if(StrEqual(sShowOutput, "OnTakeDamage"))
+			if(strcmp(sShowOutput, "OnTakeDamage", false) == 0)
 			{
 				SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostShow);
 			}
@@ -1046,12 +1122,12 @@ void ProcessEntitySpawned(int entity)
 		if(sKillTrigger[0] == '#')
 			iKillTriggerHammerID = StringToInt(sKillTrigger[1]);
 
-		if((iKillTriggerHammerID == -1 && sKillTrigger[0] && StrEqual(sTargetname, sKillTrigger)) || iKillTriggerHammerID == iHammerID)
+		if((iKillTriggerHammerID == -1 && sKillTrigger[0] && strcmp(sTargetname, sKillTrigger, false) == 0) || iKillTriggerHammerID == iHammerID)
 		{
 			char sKillOutput[64];
 			Config.GetKillOutput(sKillOutput, sizeof(sKillOutput));
 
-			if(StrEqual(sKillOutput, "OnTakeDamage"))
+			if(strcmp(sKillOutput, "OnTakeDamage", false) == 0)
 			{
 				SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostKill);
 			}
@@ -1383,7 +1459,7 @@ bool BossInit(CBoss _Boss)
 			int entity = INVALID_ENT_REFERENCE;
 			while((entity = FindEntityByTargetname(entity, sShowTrigger)) != INVALID_ENT_REFERENCE)
 			{
-				if(StrEqual(sShowOutput, "OnTakeDamage"))
+				if(strcmp(sShowOutput, "OnTakeDamage", false) == 0)
 				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostShow);
 				}
@@ -1410,7 +1486,7 @@ bool BossInit(CBoss _Boss)
 			int entity = INVALID_ENT_REFERENCE;
 			while((entity = FindEntityByTargetname(entity, sKillTrigger)) != INVALID_ENT_REFERENCE)
 			{
-				if(StrEqual(sKillOutput, "OnTakeDamage"))
+				if(strcmp(sKillOutput, "OnTakeDamage", false) == 0)
 				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostKill);
 				}
