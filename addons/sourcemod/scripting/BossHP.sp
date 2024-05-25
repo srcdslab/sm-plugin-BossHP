@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.3.5",
+	version 		= "1.3.6",
 	url 			= ""
 };
 
@@ -43,7 +43,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
 	CreateNative("BossHP_IsBossEnt", Native_IsBossEntity);
 	RegPluginLibrary("BossHP");
-return APLRes_Success;
+	return APLRes_Success;
 }
 
 public void OnPluginStart()
@@ -999,6 +999,7 @@ void OnKillTrigger(int entity, const char[] output, SDKHookType HookType = view_
 			}
 			else
 			{
+				// CreateForward_OnBossDead(Boss);
 				delete Boss;
 				g_aBoss.Erase(j);
 				j--;
@@ -1149,11 +1150,16 @@ void ProcessGameFrame()
 	for (int i = 0; i < g_aBoss.Length; i++)
 	{
 		CBoss Boss = g_aBoss.Get(i);
+		CConfig _Config = Boss.dConfig;
 
 		if (Boss.fKillAt && Boss.fKillAt < fGameTime)
 		{
 			if (g_cvVerboseLog.IntValue > 0)
-				LogMessage("Deleting boss %d (KillAt)", i);
+			{
+				char sBoss[64];
+				_Config.GetName(sBoss, sizeof(sBoss));
+				LogMessage("Deleting boss %s (%d) (KillAt)", sBoss, i);
+			}
 			CreateForward_OnBossDead(Boss);
 			delete Boss;
 			g_aBoss.Erase(i);
@@ -1177,7 +1183,11 @@ void ProcessGameFrame()
 		if(!BossProcess(Boss))
 		{
 			if (g_cvVerboseLog.IntValue > 0)
-				LogMessage("Deleting boss %d (dead)", i);
+			{
+				char sBoss[64];
+				_Config.GetName(sBoss, sizeof(sBoss));
+				LogMessage("Deleting boss %s (%d) (dead)", sBoss, i);
+			}
 			CreateForward_OnBossDead(Boss);
 			delete Boss;
 			g_aBoss.Erase(i);
