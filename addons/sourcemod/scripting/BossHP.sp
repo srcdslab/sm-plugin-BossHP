@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.3.6",
+	version 		= "1.3.7",
 	url 			= ""
 };
 
@@ -314,6 +314,9 @@ stock void LoadOldConfig()
 			LogError("Could not find \"name\" in \"%s\"", sSection);
 			continue;
 		}
+
+		// Prevent error and bad display
+		ReplaceString(sName, sizeof(sName), "%", "");
 
 		char sMethod[64];
 		KvConfig.GetString("method", sMethod, sizeof(sMethod));
