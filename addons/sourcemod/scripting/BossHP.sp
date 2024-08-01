@@ -247,7 +247,7 @@ stock void LoadOldConfig()
 
 	if (FileExists(sConfigFile_override))
 	{
-		if(!KvConfig.ImportFromFile(sConfigFile_override))
+		if (!KvConfig.ImportFromFile(sConfigFile_override))
 		{
 			LogMessage("Unable to load config override: \"%s\"", sConfigFile_override);
 			delete KvConfig;
@@ -266,7 +266,7 @@ stock void LoadOldConfig()
 		if (!FileExists(sConfigFile))
 			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/bosshp/%s.cfg", sMapName_lower);
 
-		if(!KvConfig.ImportFromFile(sConfigFile))
+		if (!KvConfig.ImportFromFile(sConfigFile))
 		{
 			LogMessage("Unable to load config: \"%s\"", sConfigFile);
 			delete KvConfig;
@@ -283,7 +283,7 @@ stock void LoadOldConfig()
 
 	KvConfig.Rewind();
 
-	if(!KvConfig.GotoFirstSubKey())
+	if (!KvConfig.GotoFirstSubKey())
 	{
 		delete KvConfig;
 		g_bConfigError = true;
@@ -300,7 +300,7 @@ stock void LoadOldConfig()
 
 		char sName[64];
 		KvConfig.GetString("name", sName, sizeof(sName));
-		if(!sName[0])
+		if (!sName[0])
 		{
 			g_bConfigError = true;
 			LogError("Could not find \"name\" in \"%s\"", sSection);
@@ -312,7 +312,7 @@ stock void LoadOldConfig()
 
 		char sMethod[64];
 		KvConfig.GetString("method", sMethod, sizeof(sMethod));
-		if(!sMethod[0])
+		if (!sMethod[0])
 		{
 			g_bConfigError = true;
 			LogError("Could not find \"method\" in \"%s\"", sSection);
@@ -321,7 +321,7 @@ stock void LoadOldConfig()
 
 		char sTrigger[64 * 2];
 		KvConfig.GetString("trigger", sTrigger, sizeof(sTrigger));
-		if(!sTrigger[0])
+		if (!sTrigger[0])
 		{
 			g_bConfigError = true;
 			LogError("Could not find \"trigger\" in \"%s\"", sSection);
@@ -329,7 +329,7 @@ stock void LoadOldConfig()
 		}
 
 		int iTriggerDelim;
-		if((iTriggerDelim = FindCharInString(sTrigger, ':')) == -1)
+		if ((iTriggerDelim = FindCharInString(sTrigger, ':')) == -1)
 		{
 			g_bConfigError = true;
 			LogError("Delimiter ':' not found in \"trigger\"(%s) in \"%s\"", sTrigger, sSection);
@@ -339,7 +339,7 @@ stock void LoadOldConfig()
 
 		float fTriggerDelay = 0.0;
 		int iTriggerDelayDelim;
-		if((iTriggerDelayDelim = FindCharInString(sTrigger[iTriggerDelim + 1], ':')) != -1)
+		if ((iTriggerDelayDelim = FindCharInString(sTrigger[iTriggerDelim + 1], ':')) != -1)
 		{
 			iTriggerDelayDelim += iTriggerDelim + 1;
 			fTriggerDelay = StringToFloat(sTrigger[iTriggerDelayDelim + 1]);
@@ -351,9 +351,9 @@ stock void LoadOldConfig()
 		float fShowTriggerDelay = 0.0;
 		int iShowTriggerDelayDelim;
 		KvConfig.GetString("showtrigger", sShowTrigger, sizeof(sShowTrigger));
-		if(sShowTrigger[0])
+		if (sShowTrigger[0])
 		{
-			if((iShowTriggerDelim = FindCharInString(sShowTrigger, ':')) == -1)
+			if ((iShowTriggerDelim = FindCharInString(sShowTrigger, ':')) == -1)
 			{
 				g_bConfigError = true;
 				LogError("Delimiter ':' not found in \"showtrigger\"(%s) in \"%s\"", sShowTrigger, sSection);
@@ -361,7 +361,7 @@ stock void LoadOldConfig()
 			}
 			sShowTrigger[iShowTriggerDelim] = 0;
 
-			if((iShowTriggerDelayDelim = FindCharInString(sShowTrigger[iShowTriggerDelim + 1], ':')) != -1)
+			if ((iShowTriggerDelayDelim = FindCharInString(sShowTrigger[iShowTriggerDelim + 1], ':')) != -1)
 			{
 				iShowTriggerDelayDelim += iShowTriggerDelim + 1;
 				fShowTriggerDelay = StringToFloat(sShowTrigger[iShowTriggerDelayDelim + 1]);
@@ -374,9 +374,9 @@ stock void LoadOldConfig()
 		float fKillTriggerDelay = 0.0;
 		int iKillTriggerDelayDelim;
 		KvConfig.GetString("killtrigger", sKillTrigger, sizeof(sKillTrigger));
-		if(sKillTrigger[0])
+		if (sKillTrigger[0])
 		{
-			if((iKillTriggerDelim = FindCharInString(sKillTrigger, ':')) == -1)
+			if ((iKillTriggerDelim = FindCharInString(sKillTrigger, ':')) == -1)
 			{
 				g_bConfigError = true;
 				LogError("Delimiter ':' not found in \"killtrigger\"(%s) in \"%s\"", sKillTrigger, sSection);
@@ -384,7 +384,7 @@ stock void LoadOldConfig()
 			}
 			sKillTrigger[iKillTriggerDelim] = 0;
 
-			if((iKillTriggerDelayDelim = FindCharInString(sKillTrigger[iKillTriggerDelim + 1], ':')) != -1)
+			if ((iKillTriggerDelayDelim = FindCharInString(sKillTrigger[iKillTriggerDelim + 1], ':')) != -1)
 			{
 				iKillTriggerDelayDelim += iKillTriggerDelim + 1;
 				fKillTriggerDelay = StringToFloat(sKillTrigger[iKillTriggerDelayDelim + 1]);
@@ -401,10 +401,10 @@ stock void LoadOldConfig()
 
 		CConfig Config = view_as<CConfig>(INVALID_HANDLE);
 
-		if(strcmp(sMethod, "breakable", false) == 0)
+		if (strcmp(sMethod, "breakable", false) == 0)
 		{
 			char sBreakable[64];
-			if(!KvConfig.GetString("breakable", sBreakable, sizeof(sBreakable)))
+			if (!KvConfig.GetString("breakable", sBreakable, sizeof(sBreakable)))
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"breakable\" in \"%s\"", sSection);
@@ -417,10 +417,10 @@ stock void LoadOldConfig()
 
 			Config = view_as<CConfig>(BreakableConfig);
 		}
-		else if(strcmp(sMethod, "counter", false) == 0)
+		else if (strcmp(sMethod, "counter", false) == 0)
 		{
 			char sCounter[64];
-			if(!KvConfig.GetString("counter", sCounter, sizeof(sCounter)))
+			if (!KvConfig.GetString("counter", sCounter, sizeof(sCounter)))
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"counter\" in \"%s\"", sSection);
@@ -433,10 +433,10 @@ stock void LoadOldConfig()
 
 			Config = view_as<CConfig>(CounterConfig);
 		}
-		else if(strcmp(sMethod, "hpbar", false) == 0)
+		else if (strcmp(sMethod, "hpbar", false) == 0)
 		{
 			char sIterator[64];
-			if(!KvConfig.GetString("iterator", sIterator, sizeof(sIterator)))
+			if (!KvConfig.GetString("iterator", sIterator, sizeof(sIterator)))
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"iterator\" in \"%s\"", sSection);
@@ -444,7 +444,7 @@ stock void LoadOldConfig()
 			}
 
 			char sCounter[64];
-			if(!KvConfig.GetString("counter", sCounter, sizeof(sCounter)))
+			if (!KvConfig.GetString("counter", sCounter, sizeof(sCounter)))
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"counter\" in \"%s\"", sSection);
@@ -452,7 +452,7 @@ stock void LoadOldConfig()
 			}
 
 			char sBackup[64];
-			if(!KvConfig.GetString("backup", sBackup, sizeof(sBackup)))
+			if (!KvConfig.GetString("backup", sBackup, sizeof(sBackup)))
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"backup\" in \"%s\"", sSection);
@@ -468,7 +468,7 @@ stock void LoadOldConfig()
 			Config = view_as<CConfig>(HPBarConfig);
 		}
 
-		if(Config == INVALID_HANDLE)
+		if (Config == INVALID_HANDLE)
 		{
 			g_bConfigError = true;
 			LogError("Invalid \"method\"(%s) in \"%s\"", sMethod, sSection);
@@ -486,14 +486,14 @@ stock void LoadOldConfig()
 		Config.SetOutput(sTrigger[iTriggerDelim + 1]);
 		Config.fTriggerDelay = fTriggerDelay;
 
-		if(sShowTrigger[0])
+		if (sShowTrigger[0])
 		{
 			Config.SetShowTrigger(sShowTrigger);
 			Config.SetShowOutput(sShowTrigger[iShowTriggerDelim + 1]);
 			Config.fShowTriggerDelay = fShowTriggerDelay;
 		}
 
-		if(sKillTrigger[0])
+		if (sKillTrigger[0])
 		{
 			Config.SetKillTrigger(sKillTrigger);
 			Config.SetKillOutput(sKillTrigger[iKillTriggerDelim + 1]);
@@ -501,11 +501,11 @@ stock void LoadOldConfig()
 		}
 
 		g_aConfig.Push(Config);
-	} while(KvConfig.GotoNextKey(false));
+	} while (KvConfig.GotoNextKey(false));
 
 	delete KvConfig;
 
-	if(!g_aConfig.Length)
+	if (!g_aConfig.Length)
 	{
 		delete g_aConfig;
 		g_bConfigError = true;
@@ -542,7 +542,7 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 	if (g_cvVerboseLog.IntValue > 1)
 		LogMessage("OnTrigger(%d:\"%s\":#%d, \"%s\")", entity, sTargetname, iHammerID, output);
 
-	for(int i = 0; i < g_aConfig.Length; i++)
+	for (int i = 0; i < g_aConfig.Length; i++)
 	{
 		CConfig Config = g_aConfig.Get(i);
 
@@ -550,49 +550,49 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 		Config.GetTrigger(sTrigger, sizeof(sTrigger));
 
 		int iTriggerHammerID = -1;
-		if(sTrigger[0] == '#')
+		if (sTrigger[0] == '#')
 		{
 			iTriggerHammerID = StringToInt(sTrigger[1]);
 
-			if(iTriggerHammerID != iHammerID)
+			if (iTriggerHammerID != iHammerID)
 				continue;
 		}
-		else if(!sTargetname[0] || strcmp(sTargetname, sTrigger, false) != 0)
+		else if (!sTargetname[0] || strcmp(sTargetname, sTrigger, false) != 0)
 			continue;
 
 		char sOutput[64];
 		GetEntityOrConfigOutput(Config, entity, sOutput, sizeof(sOutput));
 
-		if(strcmp(output, sOutput, false) != 0)
+		if (strcmp(output, sOutput, false) != 0)
 			continue;
 
 		bool Once = !Config.bMultiTrigger;
 		char sTemp[8];
 
-		if(Once)
+		if (Once)
 		{
 			IntToString(i, sTemp, sizeof(sTemp));
 			bool bHadOnce = false;
-			if(g_aHadOnce.GetValue(sTemp, bHadOnce) && bHadOnce)
+			if (g_aHadOnce.GetValue(sTemp, bHadOnce) && bHadOnce)
 				continue;
 		}
 
-		if(HookType != view_as<SDKHookType>(-1) && Once)
+		if (HookType != view_as<SDKHookType>(-1) && Once)
 		{
-			if(HookType == SDKHook_OnTakeDamagePost)
+			if (HookType == SDKHook_OnTakeDamagePost)
 				SDKUnhook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePost);
 		}
 
 		CBoss Boss = BossAdd(Config, entity);
 
-		if(Boss != INVALID_HANDLE)
+		if (Boss != INVALID_HANDLE)
 		{
 			if (Once)
 				g_aHadOnce.SetValue(sTemp, true);
 
 			if (g_cvVerboseLog.IntValue > 0)
 			{
-				if(iTriggerHammerID == -1)
+				if (iTriggerHammerID == -1)
 					LogMessage("Triggered boss %s(%d) from output %s", sTargetname, entity, output);
 				else
 					LogMessage("Triggered boss #%d(%d) from output %s", iTriggerHammerID, entity, output);
@@ -610,66 +610,66 @@ void OnShowTrigger(int entity, const char[] output, SDKHookType HookType = view_
 
 	int iTemplateNum = -1;
 	int iTemplateLoc = FindCharInString(sTargetname, '&', true);
-	if(iTemplateLoc != -1)
+	if (iTemplateLoc != -1)
 	{
 		iTemplateNum = StringToInt(sTargetname[iTemplateLoc + 1]);
 		sTargetname[iTemplateLoc] = 0;
 	}
 
-	for(int i = 0; i < g_aConfig.Length; i++)
+	for (int i = 0; i < g_aConfig.Length; i++)
 	{
 		CConfig Config = g_aConfig.Get(i);
 
 		char sShowTrigger[64];
 		Config.GetShowTrigger(sShowTrigger, sizeof(sShowTrigger));
 
-		if(!sShowTrigger[0])
+		if (!sShowTrigger[0])
 			continue;
 
 		int iShowTriggerHammerID = -1;
-		if(sShowTrigger[0] == '#')
+		if (sShowTrigger[0] == '#')
 		{
 			iShowTriggerHammerID = StringToInt(sShowTrigger[1]);
 
-			if(iShowTriggerHammerID != iHammerID)
+			if (iShowTriggerHammerID != iHammerID)
 				continue;
 		}
-		else if(!sTargetname[0] || strcmp(sTargetname, sShowTrigger, false) != 0)
+		else if (!sTargetname[0] || strcmp(sTargetname, sShowTrigger, false) != 0)
 			continue;
 
 		char sShowOutput[64];
 		Config.GetShowOutput(sShowOutput, sizeof(sShowOutput));
 
-		if(strcmp(output, sShowOutput, false) != 0)
+		if (strcmp(output, sShowOutput, false) != 0)
 			continue;
 
 		if (g_cvVerboseLog.IntValue > 0)
 		{
-			if(iShowTriggerHammerID == -1)
+			if (iShowTriggerHammerID == -1)
 				LogMessage("Triggered show boss %s(%d) from output %s", sTargetname, entity, output);
 			else
 				LogMessage("Triggered show boss #%d(%d) from output %s", iShowTriggerHammerID, entity, output);
 		}
 
-		if(HookType != view_as<SDKHookType>(-1) && !Config.bMultiTrigger)
+		if (HookType != view_as<SDKHookType>(-1) && !Config.bMultiTrigger)
 		{
-			if(HookType == SDKHook_OnTakeDamagePost)
+			if (HookType == SDKHook_OnTakeDamagePost)
 				SDKUnhook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePost);
 		}
 
 		float fShowTriggerDelay = Config.fShowTriggerDelay;
 
-		for(int j = 0; j < g_aBoss.Length; j++)
+		for (int j = 0; j < g_aBoss.Length; j++)
 		{
 			CBoss Boss = g_aBoss.Get(j);
 
-			if(Boss.dConfig != Config)
+			if (Boss.dConfig != Config)
 				continue;
 
-			if(Boss.iTemplateNum != iTemplateNum)
+			if (Boss.iTemplateNum != iTemplateNum)
 				continue;
 
-			if(fShowTriggerDelay > 0)
+			if (fShowTriggerDelay > 0)
 			{
 				Boss.fShowAt = GetGameTime() + fShowTriggerDelay;
 				if (g_cvVerboseLog.IntValue > 0)
@@ -694,66 +694,66 @@ void OnKillTrigger(int entity, const char[] output, SDKHookType HookType = view_
 
 	int iTemplateNum = -1;
 	int iTemplateLoc = FindCharInString(sTargetname, '&', true);
-	if(iTemplateLoc != -1)
+	if (iTemplateLoc != -1)
 	{
 		iTemplateNum = StringToInt(sTargetname[iTemplateLoc + 1]);
 		sTargetname[iTemplateLoc] = 0;
 	}
 
-	for(int i = 0; i < g_aConfig.Length; i++)
+	for (int i = 0; i < g_aConfig.Length; i++)
 	{
 		CConfig Config = g_aConfig.Get(i);
 
 		char sKillTrigger[64];
 		Config.GetKillTrigger(sKillTrigger, sizeof(sKillTrigger));
 
-		if(!sKillTrigger[0])
+		if (!sKillTrigger[0])
 			continue;
 
 		int iKillTriggerHammerID = -1;
-		if(sKillTrigger[0] == '#')
+		if (sKillTrigger[0] == '#')
 		{
 			iKillTriggerHammerID = StringToInt(sKillTrigger[1]);
 
-			if(iKillTriggerHammerID != iHammerID)
+			if (iKillTriggerHammerID != iHammerID)
 				continue;
 		}
-		else if(!sTargetname[0] || strcmp(sTargetname, sKillTrigger, false) != 0)
+		else if (!sTargetname[0] || strcmp(sTargetname, sKillTrigger, false) != 0)
 			continue;
 
 		char sKillOutput[64];
 		Config.GetKillOutput(sKillOutput, sizeof(sKillOutput));
 
-		if(strcmp(output, sKillOutput, false) != 0)
+		if (strcmp(output, sKillOutput, false) != 0)
 			continue;
 
 		if (g_cvVerboseLog.IntValue > 0)
 		{
-			if(iKillTriggerHammerID == -1)
+			if (iKillTriggerHammerID == -1)
 				LogMessage("Triggered kill boss %s(%d) from output %s", sTargetname, entity, output);
 			else
 				LogMessage("Triggered kill boss #%d(%d) from output %s", iKillTriggerHammerID, entity, output);
 		}
 
-		if(HookType != view_as<SDKHookType>(-1) && !Config.bMultiTrigger)
+		if (HookType != view_as<SDKHookType>(-1) && !Config.bMultiTrigger)
 		{
-			if(HookType == SDKHook_OnTakeDamagePost)
+			if (HookType == SDKHook_OnTakeDamagePost)
 				SDKUnhook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePost);
 		}
 
 		float fKillTriggerDelay = Config.fKillTriggerDelay;
 
-		for(int j = 0; j < g_aBoss.Length; j++)
+		for (int j = 0; j < g_aBoss.Length; j++)
 		{
 			CBoss Boss = g_aBoss.Get(j);
 
-			if(Boss.dConfig != Config)
+			if (Boss.dConfig != Config)
 				continue;
 
-			if(Boss.iTemplateNum != iTemplateNum)
+			if (Boss.iTemplateNum != iTemplateNum)
 				continue;
 
-			if(fKillTriggerDelay > 0)
+			if (fKillTriggerDelay > 0)
 			{
 				Boss.fKillAt = GetGameTime() + fKillTriggerDelay;
 				if (g_cvVerboseLog.IntValue > 0)
@@ -774,14 +774,14 @@ void OnKillTrigger(int entity, const char[] output, SDKHookType HookType = view_
 
 void ProcessEnvEntityMakerEntitySpawned(const char[] output, int caller, int activator, float delay)
 {
-	if(!g_aConfig)
+	if (!g_aConfig)
 		return;
 
 	char sClassname[64];
-	if(!GetEntityClassname(caller, sClassname, sizeof(sClassname)))
+	if (!GetEntityClassname(caller, sClassname, sizeof(sClassname)))
 		return;
 
-	if(strcmp(sClassname, "env_entity_maker", false) != 0)
+	if (strcmp(sClassname, "env_entity_maker", false) != 0)
 	{
 		g_bConfigError = true;
 		LogError("[SOURCEMOD BUG] output: \"%s\", caller: %d, activator: %d, delay: %f, classname: \"%s\"",
@@ -790,11 +790,11 @@ void ProcessEnvEntityMakerEntitySpawned(const char[] output, int caller, int act
 	}
 
 	char sPointTemplate[64];
-	if(GetEntPropString(caller, Prop_Data, "m_iszTemplate", sPointTemplate, sizeof(sPointTemplate)) <= 0)
+	if (GetEntPropString(caller, Prop_Data, "m_iszTemplate", sPointTemplate, sizeof(sPointTemplate)) <= 0)
 		return;
 
 	int iPointTemplate = FindEntityByTargetname(INVALID_ENT_REFERENCE, sPointTemplate, "point_template");
-	if(iPointTemplate == INVALID_ENT_REFERENCE)
+	if (iPointTemplate == INVALID_ENT_REFERENCE)
 		return;
 
 	OnEntityOutput("OnEntitySpawned", iPointTemplate, caller, delay);
@@ -802,7 +802,7 @@ void ProcessEnvEntityMakerEntitySpawned(const char[] output, int caller, int act
 
 void ProcessEntitySpawned(int entity)
 {
-	if(!g_aConfig || !IsValidEntity(entity))
+	if (!g_aConfig || !IsValidEntity(entity))
 		return;
 
 	char sTargetname[64];
@@ -816,7 +816,7 @@ void ProcessEntitySpawned(int entity)
 
 	int iHammerID = GetEntProp(entity, Prop_Data, "m_iHammerID");
 
-	for(int i = 0; i < g_aConfig.Length; i++)
+	for (int i = 0; i < g_aConfig.Length; i++)
 	{
 		CConfig Config = g_aConfig.Get(i);
 
@@ -824,15 +824,15 @@ void ProcessEntitySpawned(int entity)
 		Config.GetTrigger(sTrigger, sizeof(sTrigger));
 
 		int iTriggerHammerID = -1;
-		if(sTrigger[0] == '#')
+		if (sTrigger[0] == '#')
 			iTriggerHammerID = StringToInt(sTrigger[1]);
 
-		if((iTriggerHammerID == -1 && sTargetname[0] && strcmp(sTargetname, sTrigger, false) == 0) || iTriggerHammerID == iHammerID)
+		if ((iTriggerHammerID == -1 && sTargetname[0] && strcmp(sTargetname, sTrigger, false) == 0) || iTriggerHammerID == iHammerID)
 		{
 			char sOutput[64];
 			GetEntityOrConfigOutput(Config, entity, sOutput, sizeof(sOutput));
 
-			if(strcmp(sOutput, "OnTakeDamage", false) == 0)
+			if (strcmp(sOutput, "OnTakeDamage", false) == 0)
 			{
 				SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePost);
 			}
@@ -850,15 +850,15 @@ void ProcessEntitySpawned(int entity)
 		Config.GetShowTrigger(sShowTrigger, sizeof(sShowTrigger));
 
 		int iShowTriggerHammerID = -1;
-		if(sShowTrigger[0] == '#')
+		if (sShowTrigger[0] == '#')
 			iShowTriggerHammerID = StringToInt(sShowTrigger[1]);
 
-		if((iShowTriggerHammerID == -1 && sShowTrigger[0] && strcmp(sTargetname, sShowTrigger, false) == 0) || iShowTriggerHammerID == iHammerID)
+		if ((iShowTriggerHammerID == -1 && sShowTrigger[0] && strcmp(sTargetname, sShowTrigger, false) == 0) || iShowTriggerHammerID == iHammerID)
 		{
 			char sShowOutput[64];
 			Config.GetShowOutput(sShowOutput, sizeof(sShowOutput));
 
-			if(strcmp(sShowOutput, "OnTakeDamage", false) == 0)
+			if (strcmp(sShowOutput, "OnTakeDamage", false) == 0)
 			{
 				SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostShow);
 			}
@@ -876,15 +876,15 @@ void ProcessEntitySpawned(int entity)
 		Config.GetKillTrigger(sKillTrigger, sizeof(sKillTrigger));
 
 		int iKillTriggerHammerID = -1;
-		if(sKillTrigger[0] == '#')
+		if (sKillTrigger[0] == '#')
 			iKillTriggerHammerID = StringToInt(sKillTrigger[1]);
 
-		if((iKillTriggerHammerID == -1 && sKillTrigger[0] && strcmp(sTargetname, sKillTrigger, false) == 0) || iKillTriggerHammerID == iHammerID)
+		if ((iKillTriggerHammerID == -1 && sKillTrigger[0] && strcmp(sTargetname, sKillTrigger, false) == 0) || iKillTriggerHammerID == iHammerID)
 		{
 			char sKillOutput[64];
 			Config.GetKillOutput(sKillOutput, sizeof(sKillOutput));
 
-			if(strcmp(sKillOutput, "OnTakeDamage", false) == 0)
+			if (strcmp(sKillOutput, "OnTakeDamage", false) == 0)
 			{
 				SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostKill);
 			}
@@ -938,11 +938,11 @@ void ProcessGameFrame()
 				Boss.fWaitUntil = 0.0;
 			}
 
-			if(!BossInit(Boss))
+			if (!BossInit(Boss))
 				continue;
 		}
 
-		if(!BossProcess(Boss))
+		if (!BossProcess(Boss))
 		{
 			if (g_cvVerboseLog.IntValue > 0)
 			{
@@ -964,26 +964,26 @@ stock CBoss BossAdd(CConfig Config, int entity)
 {
 	CBoss Boss = view_as<CBoss>(INVALID_HANDLE);
 
-	if(Config.IsBreakable)
+	if (Config.IsBreakable)
 		Boss = new CBossBreakable();
-	else if(Config.IsCounter)
+	else if (Config.IsCounter)
 		Boss = new CBossCounter();
-	else if(Config.IsHPBar)
+	else if (Config.IsHPBar)
 		Boss = new CBossHPBar();
 
-	if(Boss != INVALID_HANDLE)
+	if (Boss != INVALID_HANDLE)
 	{
 		Boss.iEntity = entity;
 		Boss.dConfig = Config;
 		Boss.bActive = false;
 
 		float fTriggerDelay = Config.fTriggerDelay;
-		if(fTriggerDelay > 0)
+		if (fTriggerDelay > 0)
 			Boss.fWaitUntil = GetGameTime() + fTriggerDelay;
 
 		char sShowTrigger[8];
 		Config.GetShowTrigger(sShowTrigger, sizeof(sShowTrigger));
-		if(sShowTrigger[0])
+		if (sShowTrigger[0])
 			Boss.bShow = false;
 
 		g_aBoss.Push(Boss);
@@ -997,7 +997,7 @@ bool BossInit(CBoss _Boss)
 	bool bNameFixup = _Config.bNameFixup;
 	int iTemplateNum = -1;
 
-	if(_Boss.IsBreakable)
+	if (_Boss.IsBreakable)
 	{
 		CBossBreakable Boss = view_as<CBossBreakable>(_Boss);
 		CConfigBreakable Config = view_as<CConfigBreakable>(_Config);
@@ -1007,43 +1007,43 @@ bool BossInit(CBoss _Boss)
 
 		int iBreakableEnt = INVALID_ENT_REFERENCE;
 
-		if(!bNameFixup)
+		if (!bNameFixup)
 		{
 			iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, "*");
-			if(iBreakableEnt == INVALID_ENT_REFERENCE)
+			if (iBreakableEnt == INVALID_ENT_REFERENCE)
 				return false;
 		}
 		else
 		{
 			StrCat(sBreakable, sizeof(sBreakable), "&*");
-			while((iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, "*")) != INVALID_ENT_REFERENCE)
+			while ((iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, "*")) != INVALID_ENT_REFERENCE)
 			{
 				bool bSkip = false;
-				for(int i = 0; i < g_aBoss.Length; i++)
+				for (int i = 0; i < g_aBoss.Length; i++)
 				{
 					CBoss _tBoss = g_aBoss.Get(i);
-					if(!_tBoss.IsBreakable)
+					if (!_tBoss.IsBreakable)
 						continue;
 
 					CBossBreakable tBoss = view_as<CBossBreakable>(_tBoss);
-					if(tBoss.iBreakableEnt == iBreakableEnt)
+					if (tBoss.iBreakableEnt == iBreakableEnt)
 					{
 						bSkip = true;
 						break;
 					}
 				}
 
-				if(!bSkip)
+				if (!bSkip)
 					break;
 			}
 
-			if(iBreakableEnt == INVALID_ENT_REFERENCE)
+			if (iBreakableEnt == INVALID_ENT_REFERENCE)
 				return false;
 
 			GetEntPropString(iBreakableEnt, Prop_Data, "m_iName", sBreakable, sizeof(sBreakable));
 
 			int iTemplateLoc = FindCharInString(sBreakable, '&', true);
-			if(iTemplateLoc == -1)
+			if (iTemplateLoc == -1)
 				return false;
 
 			iTemplateNum = StringToInt(sBreakable[iTemplateLoc + 1]);
@@ -1051,7 +1051,7 @@ bool BossInit(CBoss _Boss)
 
 		Boss.iBreakableEnt = iBreakableEnt;
 	}
-	else if(_Boss.IsCounter)
+	else if (_Boss.IsCounter)
 	{
 		CBossCounter Boss = view_as<CBossCounter>(_Boss);
 		CConfigCounter Config = view_as<CConfigCounter>(_Config);
@@ -1061,46 +1061,46 @@ bool BossInit(CBoss _Boss)
 
 		int iCounterEnt = INVALID_ENT_REFERENCE;
 
-		if(!bNameFixup)
+		if (!bNameFixup)
 		{
 			iCounterEnt = FindEntityByTargetname(iCounterEnt, sCounter, "math_counter");
-			if(iCounterEnt == INVALID_ENT_REFERENCE)
+			if (iCounterEnt == INVALID_ENT_REFERENCE)
 				return false;
 		}
 		else
 		{
 			StrCat(sCounter, sizeof(sCounter), "&*");
-			while((iCounterEnt = FindEntityByTargetname(iCounterEnt, sCounter, "math_counter")) != INVALID_ENT_REFERENCE)
+			while ((iCounterEnt = FindEntityByTargetname(iCounterEnt, sCounter, "math_counter")) != INVALID_ENT_REFERENCE)
 			{
 				char sBuf[64];
 				GetEntPropString(iCounterEnt, Prop_Data, "m_iName", sBuf, sizeof(sBuf));
 
 				bool bSkip = false;
-				for(int i = 0; i < g_aBoss.Length; i++)
+				for (int i = 0; i < g_aBoss.Length; i++)
 				{
 					CBoss _tBoss = g_aBoss.Get(i);
-					if(!_tBoss.IsCounter)
+					if (!_tBoss.IsCounter)
 						continue;
 
 					CBossCounter tBoss = view_as<CBossCounter>(_tBoss);
-					if(tBoss.iCounterEnt == iCounterEnt)
+					if (tBoss.iCounterEnt == iCounterEnt)
 					{
 						bSkip = true;
 						break;
 					}
 				}
 
-				if(!bSkip)
+				if (!bSkip)
 					break;
 			}
 
-			if(iCounterEnt == INVALID_ENT_REFERENCE)
+			if (iCounterEnt == INVALID_ENT_REFERENCE)
 				return false;
 
 			GetEntPropString(iCounterEnt, Prop_Data, "m_iName", sCounter, sizeof(sCounter));
 
 			int iTemplateLoc = FindCharInString(sCounter, '&', true);
-			if(iTemplateLoc == -1)
+			if (iTemplateLoc == -1)
 				return false;
 
 			iTemplateNum = StringToInt(sCounter[iTemplateLoc + 1]);
@@ -1113,7 +1113,7 @@ bool BossInit(CBoss _Boss)
 
 		Config.bCounterReverse = iCounterOnHitMaxCount > iCounterOnHitMinCount;
 	}
-	else if(_Boss.IsHPBar)
+	else if (_Boss.IsHPBar)
 	{
 		CBossHPBar Boss = view_as<CBossHPBar>(_Boss);
 		CConfigHPBar Config = view_as<CConfigHPBar>(_Config);
@@ -1130,62 +1130,62 @@ bool BossInit(CBoss _Boss)
 		int iCounterEnt = INVALID_ENT_REFERENCE;
 		int iBackupEnt = INVALID_ENT_REFERENCE;
 
-		if(!bNameFixup)
+		if (!bNameFixup)
 		{
 			iIteratorEnt = FindEntityByTargetname(iIteratorEnt, sIterator, "math_counter");
-			if(iIteratorEnt == INVALID_ENT_REFERENCE)
+			if (iIteratorEnt == INVALID_ENT_REFERENCE)
 				return false;
 
 			iCounterEnt = FindEntityByTargetname(iCounterEnt, sCounter, "math_counter");
-			if(iCounterEnt == INVALID_ENT_REFERENCE)
+			if (iCounterEnt == INVALID_ENT_REFERENCE)
 				return false;
 
 			iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
-			if(iBackupEnt == INVALID_ENT_REFERENCE)
+			if (iBackupEnt == INVALID_ENT_REFERENCE)
 				return false;
 		}
 		else
 		{
 			StrCat(sIterator, sizeof(sIterator), "&*");
-			while((iIteratorEnt = FindEntityByTargetname(iIteratorEnt, sIterator, "math_counter")) != INVALID_ENT_REFERENCE)
+			while ((iIteratorEnt = FindEntityByTargetname(iIteratorEnt, sIterator, "math_counter")) != INVALID_ENT_REFERENCE)
 			{
 				bool bSkip = false;
-				for(int i = 0; i < g_aBoss.Length; i++)
+				for (int i = 0; i < g_aBoss.Length; i++)
 				{
 					CBoss _tBoss = g_aBoss.Get(i);
-					if(!_tBoss.IsHPBar)
+					if (!_tBoss.IsHPBar)
 						continue;
 
 					CBossHPBar tBoss = view_as<CBossHPBar>(_tBoss);
-					if(tBoss.iIteratorEnt == iIteratorEnt)
+					if (tBoss.iIteratorEnt == iIteratorEnt)
 					{
 						bSkip = true;
 						break;
 					}
 				}
 
-				if(!bSkip)
+				if (!bSkip)
 					break;
 			}
 
-			if(iIteratorEnt == INVALID_ENT_REFERENCE)
+			if (iIteratorEnt == INVALID_ENT_REFERENCE)
 				return false;
 
 			GetEntPropString(iIteratorEnt, Prop_Data, "m_iName", sIterator, sizeof(sIterator));
 
 			int iTemplateLoc = FindCharInString(sIterator, '&', true);
-			if(iTemplateLoc == -1)
+			if (iTemplateLoc == -1)
 				return false;
 
 			StrCat(sCounter, sizeof(sCounter), sIterator[iTemplateLoc]);
 			StrCat(sBackup, sizeof(sBackup), sIterator[iTemplateLoc]);
 
 			iCounterEnt = FindEntityByTargetname(iCounterEnt, sCounter, "math_counter");
-			if(iCounterEnt == INVALID_ENT_REFERENCE)
+			if (iCounterEnt == INVALID_ENT_REFERENCE)
 				return false;
 
 			iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
-			if(iBackupEnt == INVALID_ENT_REFERENCE)
+			if (iBackupEnt == INVALID_ENT_REFERENCE)
 				return false;
 
 			iTemplateNum = StringToInt(sIterator[iTemplateLoc + 1]);
@@ -1208,14 +1208,14 @@ bool BossInit(CBoss _Boss)
 
 	_Boss.bActive = true;
 
-	if(iTemplateNum != -1)
+	if (iTemplateNum != -1)
 	{
 		_Boss.iTemplateNum = iTemplateNum;
 
 		char sShowTrigger[64];
 		_Config.GetShowTrigger(sShowTrigger, sizeof(sShowTrigger));
 
-		if(sShowTrigger[0])
+		if (sShowTrigger[0])
 		{
 			Format(sShowTrigger, sizeof(sShowTrigger), "%s&%04d", sShowTrigger, iTemplateNum);
 
@@ -1223,9 +1223,9 @@ bool BossInit(CBoss _Boss)
 			_Config.GetShowOutput(sShowOutput, sizeof(sShowOutput));
 
 			int entity = INVALID_ENT_REFERENCE;
-			while((entity = FindEntityByTargetname(entity, sShowTrigger)) != INVALID_ENT_REFERENCE)
+			while ((entity = FindEntityByTargetname(entity, sShowTrigger)) != INVALID_ENT_REFERENCE)
 			{
-				if(strcmp(sShowOutput, "OnTakeDamage", false) == 0)
+				if (strcmp(sShowOutput, "OnTakeDamage", false) == 0)
 				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostShow);
 				}
@@ -1242,7 +1242,7 @@ bool BossInit(CBoss _Boss)
 		char sKillTrigger[64];
 		_Config.GetKillTrigger(sKillTrigger, sizeof(sKillTrigger));
 
-		if(sKillTrigger[0])
+		if (sKillTrigger[0])
 		{
 			Format(sKillTrigger, sizeof(sKillTrigger), "%s&%04d", sKillTrigger, iTemplateNum);
 
@@ -1250,9 +1250,9 @@ bool BossInit(CBoss _Boss)
 			_Config.GetKillOutput(sKillOutput, sizeof(sKillOutput));
 
 			int entity = INVALID_ENT_REFERENCE;
-			while((entity = FindEntityByTargetname(entity, sKillTrigger)) != INVALID_ENT_REFERENCE)
+			while ((entity = FindEntityByTargetname(entity, sKillTrigger)) != INVALID_ENT_REFERENCE)
 			{
-				if(strcmp(sKillOutput, "OnTakeDamage", false) == 0)
+				if (strcmp(sKillOutput, "OnTakeDamage", false) == 0)
 				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostKill);
 				}
@@ -1285,29 +1285,29 @@ bool BossProcess(CBoss _Boss)
 	int iLastHealth = _Boss.iHealth;
 	float fLastChange = _Boss.fLastChange;
 
-	if(_Boss.IsBreakable)
+	if (_Boss.IsBreakable)
 	{
 		CBossBreakable Boss = view_as<CBossBreakable>(_Boss);
 
 		int iBreakableEnt = Boss.iBreakableEnt;
 
-		if(IsValidEntity(iBreakableEnt))
+		if (IsValidEntity(iBreakableEnt))
 			iHealth = GetEntProp(iBreakableEnt, Prop_Data, "m_iHealth");
 		else
 			bInvalid = true;
 	}
-	else if(_Boss.IsCounter)
+	else if (_Boss.IsCounter)
 	{
 		CBossCounter Boss = view_as<CBossCounter>(_Boss);
 		CConfigCounter Config = view_as<CConfigCounter>(_Config);
 
 		int iCounterEnt = Boss.iCounterEnt;
 
-		if(IsValidEntity(iCounterEnt))
+		if (IsValidEntity(iCounterEnt))
 		{
 			int iCounterVal = RoundFloat(GetOutputValueFloat(iCounterEnt, "m_OutValue"));
 
-			if(!Config.bCounterReverse)
+			if (!Config.bCounterReverse)
 			{
 				int iCounterMin = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMin"));
 				iHealth = iCounterVal - iCounterMin;
@@ -1321,7 +1321,7 @@ bool BossProcess(CBoss _Boss)
 		else
 			bInvalid = true;
 	}
-	else if(_Boss.IsHPBar)
+	else if (_Boss.IsHPBar)
 	{
 		CBossHPBar Boss = view_as<CBossHPBar>(_Boss);
 		CConfigHPBar Config = view_as<CConfigHPBar>(_Config);
@@ -1330,13 +1330,13 @@ bool BossProcess(CBoss _Boss)
 		int iCounterEnt = Boss.iCounterEnt;
 		int iBackupEnt = Boss.iBackupEnt;
 
-		if(IsValidEntity(iIteratorEnt) && IsValidEntity(iCounterEnt) && IsValidEntity(iBackupEnt))
+		if (IsValidEntity(iIteratorEnt) && IsValidEntity(iCounterEnt) && IsValidEntity(iBackupEnt))
 		{
 			int iIteratorVal = RoundFloat(GetOutputValueFloat(iIteratorEnt, "m_OutValue"));
 			int iCounterVal = RoundFloat(GetOutputValueFloat(iCounterEnt, "m_OutValue"));
 			int iBackupVal = RoundFloat(GetOutputValueFloat(iBackupEnt, "m_OutValue"));
 
-			if(!Config.bIteratorReverse)
+			if (!Config.bIteratorReverse)
 			{
 				int iIteratorMin = RoundFloat(GetEntPropFloat(iIteratorEnt, Prop_Data, "m_flMin"));
 				iHealth = (iIteratorVal - iIteratorMin - 1) * iBackupVal;
@@ -1347,7 +1347,7 @@ bool BossProcess(CBoss _Boss)
 				iHealth = (iIteratorMax - iIteratorVal - 1) * iBackupVal;
 			}
 
-			if(!Config.bCounterReverse)
+			if (!Config.bCounterReverse)
 			{
 				int iCounterMin = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMin"));
 				iHealth += iCounterVal - iCounterMin;
@@ -1373,10 +1373,10 @@ bool BossProcess(CBoss _Boss)
 	}
 
 	// Boss hasn't initialized HP yet.
-	if(iHealth == 0 && iLastHealth == 0)
+	if (iHealth == 0 && iLastHealth == 0)
 	{
 		// Boss invalid: Delete boss
-		if(bInvalid)
+		if (bInvalid)
 			return false;
 
 		return true;
@@ -1389,7 +1389,7 @@ bool BossProcess(CBoss _Boss)
 	_Boss.iHealth = iHealth;
 
 	bool bShow = _Boss.bShow;
-	if(!bShow && _Boss.fShowAt && _Boss.fShowAt < GetGameTime())
+	if (!bShow && _Boss.fShowAt && _Boss.fShowAt < GetGameTime())
 	{
 		bShow = true;
 		_Boss.bShow = true;
@@ -1398,7 +1398,7 @@ bool BossProcess(CBoss _Boss)
 	CreateForward_OnBossProcessed(_Boss, bHealthChanged, bShow);
 
 	// Boss dead/invalid: Delete boss
-	if(!iHealth || bInvalid)
+	if (!iHealth || bInvalid)
 		return false;
 
 	return true;
@@ -1406,13 +1406,13 @@ bool BossProcess(CBoss _Boss)
 
 int FindEntityByTargetname(int entity, const char[] sTargetname, const char[] sClassname="*")
 {
-	if(sTargetname[0] == '#') // HammerID
+	if (sTargetname[0] == '#') // HammerID
 	{
 		int HammerID = StringToInt(sTargetname[1]);
 
-		while((entity = FindEntityByClassname(entity, sClassname)) != INVALID_ENT_REFERENCE)
+		while ((entity = FindEntityByClassname(entity, sClassname)) != INVALID_ENT_REFERENCE)
 		{
-			if(GetEntProp(entity, Prop_Data, "m_iHammerID") == HammerID)
+			if (GetEntProp(entity, Prop_Data, "m_iHammerID") == HammerID)
 				return entity;
 		}
 	}
@@ -1421,12 +1421,12 @@ int FindEntityByTargetname(int entity, const char[] sTargetname, const char[] sC
 		int Wildcard = FindCharInString(sTargetname, '*');
 		char sTargetnameBuf[64];
 
-		while((entity = FindEntityByClassname(entity, sClassname)) != INVALID_ENT_REFERENCE)
+		while ((entity = FindEntityByClassname(entity, sClassname)) != INVALID_ENT_REFERENCE)
 		{
-			if(GetEntPropString(entity, Prop_Data, "m_iName", sTargetnameBuf, sizeof(sTargetnameBuf)) <= 0)
+			if (GetEntPropString(entity, Prop_Data, "m_iName", sTargetnameBuf, sizeof(sTargetnameBuf)) <= 0)
 				continue;
 
-			if(strncmp(sTargetnameBuf, sTargetname, Wildcard) == 0)
+			if (strncmp(sTargetnameBuf, sTargetname, Wildcard) == 0)
 				return entity;
 		}
 	}
@@ -1507,19 +1507,19 @@ public int Native_IsBossEntity(Handle plugin, int numParams)
 			break;
 		else
 		{
-			if(_boss.IsBreakable)
+			if (_boss.IsBreakable)
 			{
 				CBossBreakable boss = view_as<CBossBreakable>(_boss);
 				if (boss.iBreakableEnt == entity)
 					break;
 			}
-			if(_boss.IsCounter)
+			if (_boss.IsCounter)
 			{
 				CBossCounter boss = view_as<CBossCounter>(_boss);
 				if (boss.iCounterEnt == entity)
 					break;
 			}
-			if(_boss.IsHPBar)
+			if (_boss.IsHPBar)
 			{
 				CBossHPBar boss = view_as<CBossHPBar>(_boss);
 				if (boss.iCounterEnt == entity ||
