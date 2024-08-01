@@ -34,7 +34,7 @@ public Plugin myinfo =
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.3.7",
+	version 		= "1.4",
 	url 			= ""
 };
 
