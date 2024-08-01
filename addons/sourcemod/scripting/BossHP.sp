@@ -79,7 +79,7 @@ public void OnConfigsExecuted()
 {
 	g_bConfigLoaded = false;
 	g_bConfigError = false;
-	LoadOldConfig();
+	LoadConfig();
 }
 
 public void OnMapEnd()
@@ -230,7 +230,7 @@ void Cleanup(bool bCleanConfig = true)
 	}
 }
 
-stock void LoadOldConfig()
+stock void LoadConfig()
 {
 	char sMapName[PLATFORM_MAX_PATH], sMapName_lower[PLATFORM_MAX_PATH];
 	GetCurrentMap(sMapName, sizeof(sMapName));
