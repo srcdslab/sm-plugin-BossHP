@@ -21,7 +21,6 @@ ArrayList g_aConfig = null;
 ArrayList g_aBoss = null;
 StringMap g_aHadOnce = null;
 
-ConVar g_cvDefaultBossName;
 ConVar g_cvVerboseLog;
 
 char g_sConfigLoaded[PLATFORM_MAX_PATH];
@@ -54,7 +53,6 @@ public void OnPluginStart()
 	RegAdminCmd("sm_bosshp_reload", Command_ReloadConfig, ADMFLAG_CONFIG, "Reload the BossHP Map Config File.");
 	RegAdminCmd("sm_bosshp", Command_IsConfigLoaded, ADMFLAG_GENERIC, "Check if the BossHP Map Config File is loaded.");
 
-	g_cvDefaultBossName = CreateConVar("sm_bosshp_default_boss_name", "Boss", "Which default name should bosses have if nothing is specified");
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 2.0);
 
 	g_hForward_OnAllBossProcessStart = CreateGlobalForward("BossHP_OnAllBossProcessStart", ET_Ignore, Param_Cell);
