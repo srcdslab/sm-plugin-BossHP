@@ -21,7 +21,6 @@ ArrayList g_aConfig = null;
 ArrayList g_aBoss = null;
 StringMap g_aHadOnce = null;
 
-ConVar g_cvConfigSyntax;
 ConVar g_cvDefaultBossName;
 ConVar g_cvVerboseLog;
 
@@ -55,7 +54,6 @@ public void OnPluginStart()
 	RegAdminCmd("sm_bosshp_reload", Command_ReloadConfig, ADMFLAG_CONFIG, "Reload the BossHP Map Config File.");
 	RegAdminCmd("sm_bosshp", Command_IsConfigLoaded, ADMFLAG_GENERIC, "Check if the BossHP Map Config File is loaded.");
 
-	g_cvConfigSyntax = CreateConVar("sm_bosshp_config_syntax", "0", "Which config syntax should be used (0 = old, 1 = new)", _, true, 0.0, true, 1.0);
 	g_cvDefaultBossName = CreateConVar("sm_bosshp_default_boss_name", "Boss", "Which default name should bosses have if nothing is specified");
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 2.0);
 
@@ -83,11 +81,7 @@ public void OnConfigsExecuted()
 {
 	g_bConfigLoaded = false;
 	g_bConfigError = false;
-
-	if (g_cvConfigSyntax.IntValue == 0)
-		LoadOldConfig();
-	else
-		LoadNewConfig();
+	LoadOldConfig();
 }
 
 public void OnMapEnd()
@@ -527,219 +521,6 @@ stock void LoadOldConfig()
 	g_aHadOnce = new StringMap();
 }
 
-stock void LoadNewConfig()
-{
-	char sMapName[PLATFORM_MAX_PATH], sMapName_lower[PLATFORM_MAX_PATH];
-	GetCurrentMap(sMapName, sizeof(sMapName));
-	String_ToLower(sMapName, sMapName_lower, sizeof(sMapName_lower));
-
-	char sConfigFile[PLATFORM_MAX_PATH], sConfigFile_override[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.cfg", sMapName);
-	BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/MapBossHP/%s_override.cfg", sMapName);
-
-	KeyValues KvConfig = new KeyValues("math_counter");
-
-	if (!FileExists(sConfigFile_override))
-		BuildPath(Path_SM, sConfigFile_override, sizeof(sConfigFile_override), "configs/MapBossHP/%s_override.cfg", sMapName_lower);
-
-	if (FileExists(sConfigFile_override))
-	{
-		if(!KvConfig.ImportFromFile(sConfigFile_override))
-		{
-			LogMessage("Unable to load config override: \"%s\"", sConfigFile_override);
-			delete KvConfig;
-			return;
-		}
-		else
-		{
-			g_bConfigLoaded = true;
-			g_sConfigLoaded = sConfigFile_override;
-			if (g_cvVerboseLog.IntValue > 0)
-				LogMessage("Loaded override mapconfig: \"%s\"", sConfigFile_override);
-		}
-	}
-	else
-	{
-		if (!FileExists(sConfigFile))
-			BuildPath(Path_SM, sConfigFile, sizeof(sConfigFile), "configs/MapBossHP/%s.cfg", sMapName_lower);
-
-		if(!KvConfig.ImportFromFile(sConfigFile))
-		{
-			LogMessage("Unable to load config: \"%s\"", sConfigFile);
-			delete KvConfig;
-			return;
-		}
-		else
-		{
-			g_bConfigLoaded = true;
-			g_sConfigLoaded = sConfigFile;
-			if (g_cvVerboseLog.IntValue > 0)
-				LogMessage("Loaded mapconfig: \"%s\"", sConfigFile);
-		}
-	}
-	KvConfig.Rewind();
-
-	if(!KvConfig.GotoFirstSubKey())
-	{
-		delete KvConfig;
-		g_bConfigError = true;
-		LogError("GotoFirstSubKey() failed!");
-		return;
-	}
-
-	g_aConfig = new ArrayList();
-
-	do
-	{
-		char sSection[64];
-		KvConfig.GetSectionName(sSection, sizeof(sSection));
-
-		if (strcmp(sSection, "config", false) == 0)
-		{
-			int iRoundEndShowTopDamage = KvConfig.GetNum("RoundEndShowTopDamage", 1);
-			int iShowTopDamageDuringBOSS = KvConfig.GetNum("ShowTopDamageDuringBOSS", 0);
-			int iForceEnable = KvConfig.GetNum("ForceEnable", 1);
-			int iCrosshairChannel = KvConfig.GetNum("CrosshairChannel", 5);
-			if (iCrosshairChannel >= 1 && iCrosshairChannel <= 6)
-			{
-				g_bConfigError = true;
-				LogError("Invalid value for \"CrosshairChannel\" in \"%s\"", sSection);
-			}
-			int iBossRewardMoney = KvConfig.GetNum("BossRewardMoney", 10);
-			if (iBossRewardMoney > 0)
-			{
-				g_bConfigError = true;
-				LogError("Invalid value for \"BossRewardMoney\" in \"%s\"", sSection);
-			}
-			int iDisplayWhenHPAdded = KvConfig.GetNum("DisplayWhenHPAdded", 0);
-			float iBossHpKeepTime = KvConfig.GetFloat("BossHpKeepTime", 15.0);
-			if (iBossHpKeepTime <= 0.0)
-				iBossHpKeepTime = 0.01;
-			float iBossDieKeepTime = KvConfig.GetFloat("BossDieKeepTime", 1.0);
-			if (iBossDieKeepTime < iBossDieKeepTime)
-				iBossDieKeepTime = iBossDieKeepTime - 0.01;
-			bool bShowBeaten = view_as<bool>(KvConfig.GetNum("ShowBeaten", 1));
-			int iMaxLegalMathCounterHP = KvConfig.GetNum("MaxLegalMathCounterHP", 40000);
-			int iMaxLegalBreakableHP = KvConfig.GetNum("MaxLegalBreakableHP", 500000);
-		}
-		else
-		{
-			CConfig Config = view_as<CConfig>(INVALID_HANDLE);
-
-			char sField[64];
-			KvConfig.GetString("Type", sField, sizeof(sField));
-
-			char sName[64];
-			KvConfig.GetString("CustomText", sName, sizeof(sName));
-			if(!sName[0])
-			{
-				g_bConfigError = true;
-				LogError("Could not find \"CustomText\" in \"%s\"", sSection);
-				g_cvDefaultBossName.GetString(sName, sizeof(sName));
-			}
-
-			if (strcmp(sField, "breakable", false) == 0)
-			{
-				char sBreakableName[64];
-				KvConfig.GetString("BreakableName", sBreakableName, sizeof(sBreakableName));
-				if(!sBreakableName[0])
-				{
-					g_bConfigError = true;
-					LogError("Could not find \"BreakableName\" in \"%s\"", sSection);
-					continue;
-				}
-				CConfigBreakable BreakableConfig = new CConfigBreakable();
-
-				BreakableConfig.SetBreakable(sBreakableName);
-				BreakableConfig.SetTrigger(sBreakableName);
-
-				Config = view_as<CConfig>(BreakableConfig);
-			}
-			else
-			{
-				char sHPCounter[64];
-				KvConfig.GetString("HP_Counter", sHPCounter, sizeof(sHPCounter));
-				if(!sHPCounter[0])
-				{
-					g_bConfigError = true;
-					LogError("Could not find \"HP_Counter\" in \"%s\"", sSection);
-					continue;
-				}
-				int iHPMode = KvConfig.GetNum("HP_mode", -1);
-				char sHPInitCounter[64];
-				KvConfig.GetString("HPinit_Counter", sHPInitCounter, sizeof(sHPInitCounter));
-				char sHPBarCounter[64];
-				KvConfig.GetString("HPbar_Counter", sHPBarCounter, sizeof(sHPBarCounter));
-				int iHPBarMode = KvConfig.GetNum("HPbar_mode", -1);
-
-				if (!sHPBarCounter[0])
-				{
-					CConfigCounter CounterConfig = new CConfigCounter();
-
-					CounterConfig.SetCounter(sHPCounter);
-					CounterConfig.iMode = iHPMode;
-
-					Config = view_as<CConfig>(CounterConfig);
-				}
-				else
-				{
-					CConfigHPBar HPBarConfig = new CConfigHPBar();
-
-					HPBarConfig.SetIterator(sHPBarCounter);
-					HPBarConfig.SetCounter(sHPCounter);
-					HPBarConfig.SetBackup(sHPInitCounter);
-					HPBarConfig.iMode = iHPMode;
-					HPBarConfig.iBarMode = iHPBarMode;
-
-					Config = view_as<CConfig>(HPBarConfig);
-				}
-
-				Config.SetTrigger(sHPCounter);
-
-				if (KvConfig.JumpToKey("HP_Group", false))
-				{
-					for (int i = 0; i < MathCounterBackupSize; i++)
-					{
-						char sIncrement[64];
-						IntToString(i, sIncrement, sizeof(sIncrement));
-						char sHPGroupName[64];
-						KvConfig.GetString(sIncrement, sHPGroupName, sizeof(sHPGroupName));
-						if(!sHPGroupName[0])
-							break;
-					}
-					KvConfig.GoBack();
-				}
-			}
-
-			if(Config == INVALID_HANDLE)
-			{
-				g_bConfigError = true;
-				LogError("Invalid \"field\"(%s) in \"%s\"", sField, sSection);
-				continue;
-			}
-
-			Config.SetName(sName);
-
-			g_aConfig.Push(Config);
-		}
-	} while(KvConfig.GotoNextKey(false));
-
-	delete KvConfig;
-
-	if(!g_aConfig.Length)
-	{
-		delete g_aConfig;
-		g_bConfigError = true;
-		LogError("Empty mapconfig: \"%s\"", sConfigFile);
-		return;
-	}
-
-	Cleanup(false);
-
-	g_aBoss = new ArrayList();
-	g_aHadOnce = new StringMap();
-}
-
 void ProcessRoundEnd()
 {
 	Cleanup(false);
@@ -750,27 +531,7 @@ void ProcessRoundEnd()
 
 stock void GetEntityOrConfigOutput(CConfig Config, int entity, char[] sOutput, int iOutputSize)
 {
-	if (g_cvConfigSyntax.IntValue == 0)
-	{
-		Config.GetOutput(sOutput, iOutputSize);
-	}
-	else
-	{
-		char sClassname[64];
-		if(!GetEntityClassname(entity, sClassname, sizeof(sClassname)))
-			return;
-
-		if (strcmp("math_counter", sClassname, false) == 0)
-			strcopy(sOutput, iOutputSize, "OutValue");
-		if (strcmp("func_physbox_multiplayer", sClassname, false) == 0)
-			strcopy(sOutput, iOutputSize, "OnDamaged");
-		if (strcmp("func_physbox", sClassname, false) == 0)
-			strcopy(sOutput, iOutputSize, "OnHealthChanged");
-		if (strcmp("func_breakable", sClassname, false) == 0)
-			strcopy(sOutput, iOutputSize, "OnHealthChanged");
-		if (strcmp("prop_dynamic", sClassname, false) == 0)
-			strcopy(sOutput, iOutputSize, "OnHealthChanged");
-	}
+	Config.GetOutput(sOutput, iOutputSize);
 }
 
 void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<SDKHookType>(-1))
