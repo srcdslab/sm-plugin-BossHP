@@ -8,13 +8,35 @@
 #endif
 #define _BossHP_included
 
+// Version information
+#define BossHP_V_MAJOR   1
+#define BossHP_V_MINOR   5 
+#define BossHP_V_PATCH   0
+
+#define BossHP_VERSION   "1.5.0"
+
 #include "CConfig.inc"
 #include "CBoss.inc"
 
 /**
+ * Called when the plugin becomes available.
+ * 
+ * @noreturn
+ */
+forward void BossHP_OnPluginOK();
+
+/**
+ * Called when the plugin becomes unavailable.
+ * This can happen when the plugin is reloaded or unloaded.
+ * 
+ * @noreturn
+ */
+forward void BossHP_OnPluginNotOK();
+
+/**
  * Called before all boss processing.
  *
- * @param aBoss		 ArrayList of CBoss.
+ * @param aBoss		ArrayList of CBoss.
  * @noreturn
  */
 forward void BossHP_OnAllBossProcessStart(ArrayList aBoss);
@@ -22,7 +44,7 @@ forward void BossHP_OnAllBossProcessStart(ArrayList aBoss);
 /**
  * Called after all boss processing.
  *
- * @param aBoss		 ArrayList of CBoss.
+ * @param aBoss		ArrayList of CBoss.
  * @noreturn
  */
 forward void BossHP_OnAllBossProcessEnd(ArrayList aBoss);
@@ -30,7 +52,7 @@ forward void BossHP_OnAllBossProcessEnd(ArrayList aBoss);
 /**
  * Called after boss initialization.
  *
- * @param boss		 CBoss object.
+ * @param boss		CBoss object.
  * @noreturn
  */
 forward void BossHP_OnBossInitialized(CBoss boss);
@@ -38,9 +60,9 @@ forward void BossHP_OnBossInitialized(CBoss boss);
 /**
  * Called after boss processing.
  *
- * @param boss		 			CBoss object.
+ * @param boss		 		CBoss object.
  * @param bHealthChanged		Has boss health changed.
- * @param bShow					Can you show boss hp.
+ * @param bShow				Can you show boss hp.
  * @noreturn
  */
 forward void BossHP_OnBossProcessed(CBoss boss, bool bHealthChanged, bool bShow);
@@ -48,7 +70,7 @@ forward void BossHP_OnBossProcessed(CBoss boss, bool bHealthChanged, bool bShow)
 /**
  * Called after boss dies.
  *
- * @param boss		 CBoss object.
+ * @param boss		CBoss object.
  * @noreturn
  */
 forward void BossHP_OnBossDead(CBoss boss);
@@ -57,8 +79,8 @@ forward void BossHP_OnBossDead(CBoss boss);
  * Check if the given entity is boss entity index
  *
  * @param entity     Any valid entity index.
- * @param boss		 Optional param which refer to current boss.
- * @return           True if entity is boss or false otherwise.
+ * @param boss		Optional param which refer to current boss.
+ * @return          True if entity is boss or false otherwise.
  */
 native bool BossHP_IsBossEnt(int entity, CBoss &boss = view_as<CBoss>(INVALID_HANDLE));
 
@@ -79,4 +101,3 @@ public void __pl_BossHP_SetNTVOptional()
 	MarkNativeAsOptional("BossHP_IsBossEnt");
 }
 #endif
-

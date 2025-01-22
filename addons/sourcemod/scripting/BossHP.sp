@@ -11,6 +11,9 @@
 
 #define MathCounterBackupSize 10
 
+GlobalForward g_hForward_StatusOK;
+GlobalForward g_hForward_StatusNotOK;
+
 Handle g_hForward_OnBossInitialized = INVALID_HANDLE;
 Handle g_hForward_OnBossProcessed = INVALID_HANDLE;
 Handle g_hForward_OnBossDead = INVALID_HANDLE;
@@ -33,7 +36,7 @@ public Plugin myinfo =
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.4",
+	version 		= BossHP_VERSION,
 	url 			= ""
 };
 
@@ -55,6 +58,8 @@ public void OnPluginStart()
 
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 2.0);
 
+	g_hForward_StatusOK = CreateGlobalForward("BossHP_OnPluginOK", ET_Ignore);
+	g_hForward_StatusNotOK = CreateGlobalForward("BossHP_OnPluginNotOK", ET_Ignore);
 	g_hForward_OnAllBossProcessStart = CreateGlobalForward("BossHP_OnAllBossProcessStart", ET_Ignore, Param_Cell);
 	g_hForward_OnAllBossProcessEnd = CreateGlobalForward("BossHP_OnAllBossProcessEnd", ET_Ignore, Param_Cell);
 	g_hForward_OnBossInitialized = CreateGlobalForward("BossHP_OnBossInitialized", ET_Ignore, Param_Cell);
@@ -64,8 +69,22 @@ public void OnPluginStart()
 	AutoExecConfig(true);
 }
 
+public void OnAllPluginsLoaded()
+{
+	SendForward_Available();
+}
+
+public void OnPluginPauseChange(bool pause)
+{
+	if (pause)
+		SendForward_NotAvailable();
+	else
+		SendForward_Available();
+}
+
 public void OnPluginEnd()
 {
+	SendForward_NotAvailable();
 	Cleanup();
 
 	CloseHandle(g_hForward_OnAllBossProcessStart);
@@ -1538,4 +1557,16 @@ public int Native_IsBossEntity(Handle plugin, int numParams)
 	}
 
 	return false;
+}
+
+stock void SendForward_Available()
+{
+	Call_StartForward(g_hForward_StatusOK);
+	Call_Finish();
+}
+
+stock void SendForward_NotAvailable()
+{
+	Call_StartForward(g_hForward_StatusNotOK);
+	Call_Finish();
 }
