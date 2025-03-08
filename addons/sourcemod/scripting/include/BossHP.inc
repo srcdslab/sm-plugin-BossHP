@@ -8,6 +8,13 @@
 #endif
 #define _BossHP_included
 
+// Version information
+#define BossHP_V_MAJOR   "1"
+#define BossHP_V_MINOR   "4"
+#define BossHP_V_PATCH   "1"
+
+#define BossHP_VERSION   BossHP_V_MAJOR..."."...BossHP_V_MINOR..."."...BossHP_V_PATCH
+
 #include "CConfig.inc"
 #include "CBoss.inc"
 
@@ -79,4 +86,3 @@ public void __pl_BossHP_SetNTVOptional()
 	MarkNativeAsOptional("BossHP_IsBossEnt");
 }
 #endif
-
