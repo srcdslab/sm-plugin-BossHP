@@ -35,6 +35,7 @@ methodmap CConfig < Basic
 		myclass.SetBool("bIgnore", false);
 		myclass.SetBool("bShowBeaten", false);
 		myclass.SetFloat("fTimeout", -1.0);
+		myclass.SetInt("iOffset", 0);
 
 		return view_as<CConfig>(myclass);
 	}
@@ -217,8 +218,17 @@ methodmap CConfig < Basic
 		}
 	}
 
-
-
+	property int iOffset
+	{
+		public get()
+		{
+			return this.GetInt("iOffset");
+		}
+		public set(int value)
+		{
+			this.SetInt("iOffset", value);
+		}
+	}
 
 	property bool IsBreakable {
 		public get() {

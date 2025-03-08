@@ -33,7 +33,7 @@ public Plugin myinfo =
 	name 			= "BossHP",
 	author 			= "BotoX, Cloud Strife, maxime1907",
 	description 	= "Advanced management of entities via configurations",
-	version 		= "1.4",
+	version 		= BossHP_VERSION,
 	url 			= ""
 };
 
@@ -399,6 +399,8 @@ stock void LoadConfig()
 
 		float fTimeout = KvConfig.GetFloat("timeout", -1.0);
 
+		int iOffset = KvConfig.GetNum("offset", 0);
+
 		CConfig Config = view_as<CConfig>(INVALID_HANDLE);
 
 		if (strcmp(sMethod, "breakable", false) == 0)
@@ -481,6 +483,7 @@ stock void LoadConfig()
 		Config.bIgnore = bIgnore;
 		Config.bShowBeaten = bShowBeaten;
 		Config.fTimeout = fTimeout;
+		Config.iOffset = iOffset;
 
 		Config.SetTrigger(sTrigger);
 		Config.SetOutput(sTrigger[iTriggerDelim + 1]);
@@ -1364,6 +1367,10 @@ bool BossProcess(CBoss _Boss)
 
 	if (iHealth < 0)
 		iHealth = 0;
+
+	int iOffset = _Config.iOffset;
+	if (iOffset != 0)
+		iHealth += iOffset;
 
 	bool bHealthChanged = (iHealth != iLastHealth);
 	if (bHealthChanged)
