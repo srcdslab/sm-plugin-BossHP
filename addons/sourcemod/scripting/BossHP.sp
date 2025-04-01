@@ -530,7 +530,7 @@ void ProcessRoundEnd()
 	g_aHadOnce = new StringMap();
 }
 
-stock void GetEntityOrConfigOutput(CConfig Config, int entity, char[] sOutput, int iOutputSize)
+stock void GetEntityOrConfigOutput(CConfig Config, char[] sOutput, int iOutputSize)
 {
 	Config.GetOutput(sOutput, iOutputSize);
 }
@@ -564,7 +564,7 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 			continue;
 
 		char sOutput[64];
-		GetEntityOrConfigOutput(Config, entity, sOutput, sizeof(sOutput));
+		GetEntityOrConfigOutput(Config, sOutput, sizeof(sOutput));
 
 		if (strcmp(output, sOutput, false) != 0)
 			continue;
@@ -833,7 +833,7 @@ void ProcessEntitySpawned(int entity)
 		if ((iTriggerHammerID == -1 && sTargetname[0] && strcmp(sTargetname, sTrigger, false) == 0) || iTriggerHammerID == iHammerID)
 		{
 			char sOutput[64];
-			GetEntityOrConfigOutput(Config, entity, sOutput, sizeof(sOutput));
+			GetEntityOrConfigOutput(Config, sOutput, sizeof(sOutput));
 
 			if (strcmp(sOutput, "OnTakeDamage", false) == 0)
 			{
