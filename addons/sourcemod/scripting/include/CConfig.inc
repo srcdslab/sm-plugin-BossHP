@@ -34,6 +34,7 @@ methodmap CConfig < Basic
 		myclass.SetBool("bNameFixup", false);
 		myclass.SetBool("bIgnore", false);
 		myclass.SetBool("bShowBeaten", false);
+		myclass.SetBool("bShowHealth", false);
 		myclass.SetFloat("fTimeout", -1.0);
 		myclass.SetInt("iOffset", 0);
 
@@ -203,6 +204,18 @@ methodmap CConfig < Basic
 		public set(bool value)
 		{
 			this.SetBool("bShowBeaten", value);
+		}
+	}
+
+	property bool bShowHealth
+	{
+		public get()
+		{
+			return this.GetBool("bShowHealth");
+		}
+		public set(bool value)
+		{
+			this.SetBool("bShowHealth", value);
 		}
 	}
 

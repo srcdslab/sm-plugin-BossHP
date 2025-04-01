@@ -396,6 +396,7 @@ stock void LoadConfig()
 		bool bNameFixup = view_as<bool>(KvConfig.GetNum("namefixup", 0));
 		bool bIgnore = view_as<bool>(KvConfig.GetNum("ignore_on_boss_hits", 0));
 		bool bShowBeaten = view_as<bool>(KvConfig.GetNum("showbeaten", 1));
+		bool bShowHealth = view_as<bool>(KvConfig.GetNum("showhealth", 1));
 
 		float fTimeout = KvConfig.GetFloat("timeout", -1.0);
 
@@ -482,6 +483,7 @@ stock void LoadConfig()
 		Config.bNameFixup = bNameFixup;
 		Config.bIgnore = bIgnore;
 		Config.bShowBeaten = bShowBeaten;
+		Config.bShowHealth = bShowHealth;
 		Config.fTimeout = fTimeout;
 		Config.iOffset = iOffset;
 
