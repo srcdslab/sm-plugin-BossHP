@@ -816,9 +816,6 @@ void ProcessEntitySpawned(int entity)
 	if (g_cvVerboseLog.IntValue > 1)
 		LogMessage("ProcessEntitySpawned(%s)", sTargetname);
 
-	if (!sTargetname[0])
-		return;
-
 	int iHammerID = GetEntProp(entity, Prop_Data, "m_iHammerID");
 
 	for (int i = 0; i < g_aConfig.Length; i++)
