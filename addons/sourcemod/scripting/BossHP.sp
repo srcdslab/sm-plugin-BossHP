@@ -64,17 +64,6 @@ public void OnPluginStart()
 	AutoExecConfig(true);
 }
 
-public void OnPluginEnd()
-{
-	Cleanup();
-
-	CloseHandle(g_hForward_OnAllBossProcessStart);
-	CloseHandle(g_hForward_OnAllBossProcessEnd);
-	CloseHandle(g_hForward_OnBossInitialized);
-	CloseHandle(g_hForward_OnBossProcessed);
-	CloseHandle(g_hForward_OnBossDead);
-}
-
 public void OnConfigsExecuted()
 {
 	g_bConfigLoaded = false;
