@@ -89,18 +89,10 @@ public void OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
-	if (CanTestFeatures() && GetFeatureStatus(FeatureType_Native, "SDKHook_OnEntitySpawned") == FeatureStatus_Available)
+	if (GetFeatureStatus(FeatureType_Native, "SDKHook_OnEntitySpawned") == FeatureStatus_Available)
 		return;
 
 	SDKHook(entity, SDKHook_SpawnPost, OnEntitySpawnedPost);
-}
-
-public void OnEntityDestroyed(int entity)
-{
-	if (CanTestFeatures() && GetFeatureStatus(FeatureType_Native, "SDKHook_OnEntitySpawned") == FeatureStatus_Available)
-		return;
-
-	SDKUnhook(entity, SDKHook_SpawnPost, OnEntitySpawnedPost);
 }
 
 public void OnEntitySpawnedPost(int entity)
