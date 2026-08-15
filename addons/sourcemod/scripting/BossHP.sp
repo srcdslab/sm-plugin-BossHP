@@ -388,7 +388,8 @@ stock void LoadConfig()
 		if (strcmp(sMethod, "breakable", false) == 0)
 		{
 			char sBreakable[64];
-			if (!KvConfig.GetString("breakable", sBreakable, sizeof(sBreakable)))
+			KvConfig.GetString("breakable", sBreakable, sizeof(sBreakable));
+			if (sBreakable[0] == '\0')
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"breakable\" in \"%s\"", sSection);
@@ -404,7 +405,8 @@ stock void LoadConfig()
 		else if (strcmp(sMethod, "counter", false) == 0)
 		{
 			char sCounter[64];
-			if (!KvConfig.GetString("counter", sCounter, sizeof(sCounter)))
+			KvConfig.GetString("counter", sCounter, sizeof(sCounter));
+			if (sCounter[0] == '\0')
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"counter\" in \"%s\"", sSection);
@@ -420,7 +422,8 @@ stock void LoadConfig()
 		else if (strcmp(sMethod, "hpbar", false) == 0)
 		{
 			char sIterator[64];
-			if (!KvConfig.GetString("iterator", sIterator, sizeof(sIterator)))
+			KvConfig.GetString("iterator", sIterator, sizeof(sIterator));
+			if (sIterator[0] == '\0')
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"iterator\" in \"%s\"", sSection);
@@ -428,7 +431,8 @@ stock void LoadConfig()
 			}
 
 			char sCounter[64];
-			if (!KvConfig.GetString("counter", sCounter, sizeof(sCounter)))
+			KvConfig.GetString("counter", sCounter, sizeof(sCounter));
+			if (sCounter[0] == '\0')
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"counter\" in \"%s\"", sSection);
@@ -436,7 +440,8 @@ stock void LoadConfig()
 			}
 
 			char sBackup[64];
-			if (!KvConfig.GetString("backup", sBackup, sizeof(sBackup)))
+			KvConfig.GetString("backup", sBackup, sizeof(sBackup));
+			if (sBackup[0] == '\0')
 			{
 				g_bConfigError = true;
 				LogError("Could not find \"backup\" in \"%s\"", sSection);
