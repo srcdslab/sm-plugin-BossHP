@@ -15,8 +15,8 @@ This repository contains **BossHP**, a SourceMod plugin for Source engine games 
 
 - **Language**: SourcePawn (.sp files)
 - **Platform**: SourceMod 1.11.0+ (latest stable release)
-- **Build System**: SourceKnight (sourceknight.yaml)
-- **Compiler**: SourcePawn compiler (spcomp) via SourceKnight
+- **Build System**: Native GitHub Actions (.github/workflows/ci.yml)
+- **Compiler**: SourcePawn compiler (spcomp) via rumblefrog/setup-sp
 - **Dependencies**: outputinfo extension, smlib, basic plugin, multicolors
 
 ## Project Structure
@@ -40,7 +40,7 @@ addons/sourcemod/
 - **BossHP.inc**: Public API with natives and forwards for other plugins
 - **CBoss.inc**: Methodmap classes for different boss types (CBoss, CBossBreakable, CBossCounter, CBossHPBar)
 - **CConfig.inc**: Methodmap classes for configuration management
-- **sourceknight.yaml**: Build system configuration and dependencies
+- **.github/workflows/ci.yml**: Build system configuration and dependencies
 
 ## Code Style & Standards
 
@@ -153,22 +153,20 @@ boss.bShow           // Should display to players
 boss.dConfig         // Associated configuration
 ```
 
-## Build System (SourceKnight)
+## Build System (GitHub Actions)
 
 ### Build Commands:
 ```bash
-# Install SourceKnight (if not available)
-pip install sourceknight
-
-# Build the plugin
-sourceknight build
-
-# Clean build artifacts
-sourceknight clean
+# Compile locally with spcomp (from addons/sourcemod/scripting, with
+# dependency includes placed under include/)
+spcomp -i include -o ../plugins/BossHP.smx BossHP.sp
 ```
 
+CI builds automatically via `.github/workflows/ci.yml` on every push, pull
+request, and manual dispatch — no local toolchain installation required.
+
 ### Development Dependencies:
-- SourceMod 1.11.0-git6934 (auto-downloaded)
+- SourceMod 1.12.0-git7223 (auto-downloaded via rumblefrog/setup-sp)
 - ext-outputinfo extension
 - smlib include library
 - basic plugin methodmap library
