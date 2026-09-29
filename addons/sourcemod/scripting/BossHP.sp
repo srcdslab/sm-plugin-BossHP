@@ -907,7 +907,7 @@ void ProcessEntitySpawned(int entity)
 		if (sTrigger[0] == '#')
 			iTriggerHammerID = StringToInt(sTrigger[1]);
 
-		if ((iTriggerHammerID == -1 && sTargetname[0] && strcmp(sTargetname, sTrigger, false) == 0) || iTriggerHammerID == iHammerID)
+		if ((iTriggerHammerID == -1 && sTargetname[0] && strcmp(sTargetname, sTrigger, false) == 0) || (iTriggerHammerID != -1 && iTriggerHammerID == iHammerID))
 		{
 			char sOutput[64];
 			GetEntityOrConfigOutput(Config, sOutput, sizeof(sOutput));
@@ -933,7 +933,7 @@ void ProcessEntitySpawned(int entity)
 		if (sShowTrigger[0] == '#')
 			iShowTriggerHammerID = StringToInt(sShowTrigger[1]);
 
-		if ((iShowTriggerHammerID == -1 && sShowTrigger[0] && strcmp(sTargetname, sShowTrigger, false) == 0) || iShowTriggerHammerID == iHammerID)
+		if ((iShowTriggerHammerID == -1 && sShowTrigger[0] && strcmp(sTargetname, sShowTrigger, false) == 0) || (iShowTriggerHammerID != -1 && iShowTriggerHammerID == iHammerID))
 		{
 			char sShowOutput[64];
 			Config.GetShowOutput(sShowOutput, sizeof(sShowOutput));
@@ -959,7 +959,7 @@ void ProcessEntitySpawned(int entity)
 		if (sKillTrigger[0] == '#')
 			iKillTriggerHammerID = StringToInt(sKillTrigger[1]);
 
-		if ((iKillTriggerHammerID == -1 && sKillTrigger[0] && strcmp(sTargetname, sKillTrigger, false) == 0) || iKillTriggerHammerID == iHammerID)
+		if ((iKillTriggerHammerID == -1 && sKillTrigger[0] && strcmp(sTargetname, sKillTrigger, false) == 0) || (iKillTriggerHammerID != -1 && iKillTriggerHammerID == iHammerID))
 		{
 			char sKillOutput[64];
 			Config.GetKillOutput(sKillOutput, sizeof(sKillOutput));
