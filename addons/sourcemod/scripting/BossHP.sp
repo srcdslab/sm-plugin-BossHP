@@ -14,6 +14,7 @@
 Handle g_hForward_OnBossInitialized = INVALID_HANDLE;
 Handle g_hForward_OnBossProcessed = INVALID_HANDLE;
 Handle g_hForward_OnBossDead = INVALID_HANDLE;
+Handle g_hForward_OnBossDamaged = INVALID_HANDLE;
 Handle g_hForward_OnAllBossProcessStart = INVALID_HANDLE;
 Handle g_hForward_OnAllBossProcessEnd = INVALID_HANDLE;
 
@@ -60,6 +61,7 @@ public void OnPluginStart()
 	g_hForward_OnBossInitialized = CreateGlobalForward("BossHP_OnBossInitialized", ET_Ignore, Param_Cell);
 	g_hForward_OnBossProcessed = CreateGlobalForward("BossHP_OnBossProcessed", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	g_hForward_OnBossDead = CreateGlobalForward("BossHP_OnBossDead", ET_Ignore, Param_Cell);
+	g_hForward_OnBossDamaged = CreateGlobalForward("BossHP_OnBossDamaged", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Float);
 
 	AutoExecConfig(true);
 }
@@ -129,6 +131,11 @@ public void OnEntityOutputKill(const char[] output, int caller, int activator, f
 	OnKillTrigger(caller, output);
 }
 
+public void OnEntityOutputHurt(const char[] output, int caller, int activator, float delay)
+{
+	OnHurtTrigger(caller, output, activator);
+}
+
 public void OnTakeDamagePost(int victim, int attacker, int inflictor, float damage, int damagetype)
 {
 	OnTrigger(victim, "OnTakeDamage", SDKHook_OnTakeDamagePost);
@@ -142,6 +149,11 @@ public void OnTakeDamagePostShow(int victim, int attacker, int inflictor, float 
 public void OnTakeDamagePostKill(int victim, int attacker, int inflictor, float damage, int damagetype)
 {
 	OnKillTrigger(victim, "OnTakeDamage", SDKHook_OnTakeDamagePost);
+}
+
+public void OnTakeDamagePostHurt(int victim, int attacker, int inflictor, float damage, int damagetype)
+{
+	OnHurtTrigger(victim, "OnTakeDamage", attacker, damage);
 }
 
 public void OnGameFrame()
@@ -373,6 +385,20 @@ stock void LoadConfig()
 			}
 		}
 
+		char sHurtTrigger[64 * 2];
+		int iHurtTriggerDelim;
+		KvConfig.GetString("hurttrigger", sHurtTrigger, sizeof(sHurtTrigger));
+		if (sHurtTrigger[0])
+		{
+			if ((iHurtTriggerDelim = FindCharInString(sHurtTrigger, ':')) == -1)
+			{
+				g_bConfigError = true;
+				LogError("Delimiter ':' not found in \"hurttrigger\"(%s) in \"%s\"", sHurtTrigger, sSection);
+				continue;
+			}
+			sHurtTrigger[iHurtTriggerDelim] = 0;
+		}
+
 		bool bMultiTrigger = view_as<bool>(KvConfig.GetNum("multitrigger", 0));
 		bool bNameFixup = view_as<bool>(KvConfig.GetNum("namefixup", 0));
 		bool bIgnore = view_as<bool>(KvConfig.GetNum("ignore_on_boss_hits", 0));
@@ -489,6 +515,12 @@ stock void LoadConfig()
 			Config.SetKillTrigger(sKillTrigger);
 			Config.SetKillOutput(sKillTrigger[iKillTriggerDelim + 1]);
 			Config.fKillTriggerDelay = fKillTriggerDelay;
+		}
+
+		if (sHurtTrigger[0])
+		{
+			Config.SetHurtTrigger(sHurtTrigger);
+			Config.SetHurtOutput(sHurtTrigger[iHurtTriggerDelim + 1]);
 		}
 
 		g_aConfig.Push(Config);
@@ -763,6 +795,66 @@ void OnKillTrigger(int entity, const char[] output, SDKHookType HookType = view_
 	}
 }
 
+void OnHurtTrigger(int entity, const char[] output, int activator, float damage = 1.0)
+{
+	if (!g_aBoss || g_aBoss.Length <= 0 || !IsValidEntity(entity))
+		return;
+
+	char sTargetname[64];
+	GetEntPropString(entity, Prop_Data, "m_iName", sTargetname, sizeof(sTargetname));
+
+	int iHammerID = GetEntProp(entity, Prop_Data, "m_iHammerID");
+
+	int iTemplateNum = -1;
+	int iTemplateLoc = FindCharInString(sTargetname, '&', true);
+	if (iTemplateLoc != -1)
+	{
+		iTemplateNum = StringToInt(sTargetname[iTemplateLoc + 1]);
+		sTargetname[iTemplateLoc] = 0;
+	}
+
+	for (int i = 0; i < g_aConfig.Length; i++)
+	{
+		CConfig Config = g_aConfig.Get(i);
+
+		char sHurtTrigger[64];
+		Config.GetHurtTrigger(sHurtTrigger, sizeof(sHurtTrigger));
+
+		if (!sHurtTrigger[0])
+			continue;
+
+		if (sHurtTrigger[0] == '#')
+		{
+			if (StringToInt(sHurtTrigger[1]) != iHammerID)
+				continue;
+		}
+		else if (!sTargetname[0] || strcmp(sTargetname, sHurtTrigger, false) != 0)
+			continue;
+
+		char sHurtOutput[64];
+		Config.GetHurtOutput(sHurtOutput, sizeof(sHurtOutput));
+
+		if (strcmp(output, sHurtOutput, false) != 0)
+			continue;
+
+		for (int j = 0; j < g_aBoss.Length; j++)
+		{
+			CBoss Boss = g_aBoss.Get(j);
+
+			if (Boss.dConfig != Config)
+				continue;
+
+			if (Boss.iTemplateNum != iTemplateNum)
+				continue;
+
+			if (g_cvVerboseLog.IntValue > 1)
+				LogMessage("Triggered hurt boss %d from output %s (damage = %f)", j, output, damage);
+
+			CreateForward_OnBossDamaged(Boss, Config, activator, damage);
+		}
+	}
+}
+
 void ProcessEnvEntityMakerEntitySpawned(const char[] output, int caller, int activator, float delay)
 {
 	if (!g_aConfig)
@@ -884,6 +976,31 @@ void ProcessEntitySpawned(int entity)
 
 			if (g_cvVerboseLog.IntValue > 0)
 				LogMessage("Hooked killtrigger %s:%s", sKillTrigger, sKillOutput);
+		}
+
+		char sHurtTrigger[64];
+		Config.GetHurtTrigger(sHurtTrigger, sizeof(sHurtTrigger));
+
+		int iHurtTriggerHammerID = -1;
+		if (sHurtTrigger[0] == '#')
+			iHurtTriggerHammerID = StringToInt(sHurtTrigger[1]);
+
+		if ((iHurtTriggerHammerID == -1 && sHurtTrigger[0] && strcmp(sTargetname, sHurtTrigger, false) == 0) || iHurtTriggerHammerID == iHammerID)
+		{
+			char sHurtOutput[64];
+			Config.GetHurtOutput(sHurtOutput, sizeof(sHurtOutput));
+
+			if (strcmp(sHurtOutput, "OnTakeDamage", false) == 0)
+			{
+				SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostHurt);
+			}
+			else
+			{
+				HookSingleEntityOutput(entity, sHurtOutput, OnEntityOutputHurt);
+			}
+
+			if (g_cvVerboseLog.IntValue > 0)
+				LogMessage("Hooked hurttrigger %s:%s", sHurtTrigger, sHurtOutput);
 		}
 	}
 }
@@ -1253,6 +1370,33 @@ bool BossInit(CBoss _Boss)
 					LogMessage("Hooked killtrigger %s:%s", sKillTrigger, sKillOutput);
 			}
 		}
+
+		char sHurtTrigger[64];
+		_Config.GetHurtTrigger(sHurtTrigger, sizeof(sHurtTrigger));
+
+		if (sHurtTrigger[0])
+		{
+			Format(sHurtTrigger, sizeof(sHurtTrigger), "%s&%04d", sHurtTrigger, iTemplateNum);
+
+			char sHurtOutput[64];
+			_Config.GetHurtOutput(sHurtOutput, sizeof(sHurtOutput));
+
+			int entity = INVALID_ENT_REFERENCE;
+			while ((entity = FindEntityByTargetname(entity, sHurtTrigger)) != INVALID_ENT_REFERENCE)
+			{
+				if (strcmp(sHurtOutput, "OnTakeDamage", false) == 0)
+				{
+					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostHurt);
+				}
+				else
+				{
+					HookSingleEntityOutput(entity, sHurtOutput, OnEntityOutputHurt);
+				}
+
+				if (g_cvVerboseLog.IntValue > 0)
+					LogMessage("Hooked hurttrigger %s:%s", sHurtTrigger, sHurtOutput);
+			}
+		}
 	}
 
 	char sBoss[64];
@@ -1454,6 +1598,16 @@ public void CreateForward_OnBossDead(CBoss boss)
 {
 	Call_StartForward(g_hForward_OnBossDead);
 	Call_PushCell(boss);
+	Call_Finish();
+}
+
+public void CreateForward_OnBossDamaged(CBoss boss, CConfig config, int activator, float damage)
+{
+	Call_StartForward(g_hForward_OnBossDamaged);
+	Call_PushCell(boss);
+	Call_PushCell(config);
+	Call_PushCell(activator);
+	Call_PushFloat(damage);
 	Call_Finish();
 }
 

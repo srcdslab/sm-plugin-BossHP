@@ -10,8 +10,8 @@
 
 // Version information
 #define BossHP_V_MAJOR   "1"
-#define BossHP_V_MINOR   "4"
-#define BossHP_V_PATCH   "7"
+#define BossHP_V_MINOR   "5"
+#define BossHP_V_PATCH   "0"
 
 #define BossHP_VERSION   BossHP_V_MAJOR..."."...BossHP_V_MINOR..."."...BossHP_V_PATCH
 
@@ -59,6 +59,17 @@ forward void BossHP_OnBossProcessed(CBoss boss, bool bHealthChanged, bool bShow)
  * @noreturn
  */
 forward void BossHP_OnBossDead(CBoss boss);
+
+/**
+ * Called when a boss "hurttrigger" fires (entity output or OnTakeDamage).
+ *
+ * @param boss        CBoss object.
+ * @param config      CConfig object of the boss.
+ * @param activator   Client/entity that caused the damage (may be 0 or invalid).
+ * @param damage      Damage dealt (1.0 for entity outputs, actual damage for OnTakeDamage).
+ * @noreturn
+ */
+forward void BossHP_OnBossDamaged(CBoss boss, CConfig config, int activator, float damage);
 
 /**
  * Check if the given entity is boss entity index
