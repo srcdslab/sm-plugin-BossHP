@@ -30,6 +30,8 @@ methodmap CConfig < Basic
 		myclass.SetString("sKillTrigger", "");
 		myclass.SetString("sKillOutput", "");
 		myclass.SetFloat("fKillTriggerDelay", 0.0);
+		myclass.SetString("sHurtTrigger", "");
+		myclass.SetString("sHurtOutput", "");
 		myclass.SetBool("bMultiTrigger", false);
 		myclass.SetBool("bNameFixup", false);
 		myclass.SetBool("bIgnore", false);
@@ -157,6 +159,26 @@ methodmap CConfig < Basic
 		{
 			this.SetFloat("fKillTriggerDelay", value);
 		}
+	}
+
+	public bool GetHurtTrigger(char[] buffer, int length)
+	{
+		return this.GetString("sHurtTrigger", buffer, length);
+	}
+
+	public void SetHurtTrigger(const char[] buffer)
+	{
+		this.SetString("sHurtTrigger", buffer);
+	}
+
+	public bool GetHurtOutput(char[] buffer, int length)
+	{
+		return this.GetString("sHurtOutput", buffer, length);
+	}
+
+	public void SetHurtOutput(const char[] buffer)
+	{
+		this.SetString("sHurtOutput", buffer);
 	}
 
 	property bool bMultiTrigger
