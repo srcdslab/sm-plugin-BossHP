@@ -10,7 +10,8 @@ enum eConfigMethod
 	eConfigMethod_Invalid = 0,
 	eConfigMethod_Breakable = 1,
 	eConfigMethod_Counter = 2,
-	eConfigMethod_HPBar = 3
+	eConfigMethod_HPBar = 3,
+	eConfigMethod_PropDynamic = 4
 }
 
 methodmap CConfig < Basic
@@ -265,9 +266,16 @@ methodmap CConfig < Basic
 		}
 	}
 
+	// prop_dynamic bosses are tracked like breakables (m_iHealth), so they report as breakable too
 	property bool IsBreakable {
 		public get() {
-			return (this.iMethod == eConfigMethod_Breakable);
+			return (this.iMethod == eConfigMethod_Breakable || this.iMethod == eConfigMethod_PropDynamic);
+		}
+	}
+
+	property bool IsPropDynamic {
+		public get() {
+			return (this.iMethod == eConfigMethod_PropDynamic);
 		}
 	}
 
@@ -305,6 +313,28 @@ methodmap CConfigBreakable < CConfig
 	public void SetBreakable(const char[] buffer)
 	{
 		this.SetString("sBreakable", buffer);
+	}
+}
+
+methodmap CConfigPropDynamic < CConfigBreakable
+{
+	public CConfigPropDynamic()
+	{
+		CConfigBreakable myclass = new CConfigBreakable();
+
+		myclass.iMethod = eConfigMethod_PropDynamic;
+
+		return view_as<CConfigPropDynamic>(myclass);
+	}
+
+	public bool GetTargetname(char[] buffer, int length)
+	{
+		return this.GetBreakable(buffer, length);
+	}
+
+	public void SetTargetname(const char[] buffer)
+	{
+		this.SetBreakable(buffer);
 	}
 }
 

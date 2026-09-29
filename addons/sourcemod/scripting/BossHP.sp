@@ -482,6 +482,23 @@ stock void LoadConfig()
 
 			Config = view_as<CConfig>(HPBarConfig);
 		}
+		else if (strcmp(sMethod, "prop_dynamic", false) == 0)
+		{
+			char sTargetname[64];
+			KvConfig.GetString("targetname", sTargetname, sizeof(sTargetname));
+			if (!sTargetname[0])
+			{
+				g_bConfigError = true;
+				LogError("Could not find \"targetname\" in \"%s\"", sSection);
+				continue;
+			}
+
+			CConfigPropDynamic PropDynamicConfig = new CConfigPropDynamic();
+
+			PropDynamicConfig.SetTargetname(sTargetname);
+
+			Config = view_as<CConfig>(PropDynamicConfig);
+		}
 
 		if (Config == INVALID_HANDLE)
 		{
@@ -1110,18 +1127,22 @@ bool BossInit(CBoss _Boss)
 		char sBreakable[64];
 		Config.GetBreakable(sBreakable, sizeof(sBreakable));
 
+		char sClassname[16] = "*";
+		if (_Config.IsPropDynamic)
+			strcopy(sClassname, sizeof(sClassname), "prop_dynamic*");
+
 		int iBreakableEnt = INVALID_ENT_REFERENCE;
 
 		if (!bNameFixup)
 		{
-			iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, "*");
+			iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, sClassname);
 			if (iBreakableEnt == INVALID_ENT_REFERENCE)
 				return false;
 		}
 		else
 		{
 			StrCat(sBreakable, sizeof(sBreakable), "&*");
-			while ((iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, "*")) != INVALID_ENT_REFERENCE)
+			while ((iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, sClassname)) != INVALID_ENT_REFERENCE)
 			{
 				bool bSkip = false;
 				for (int i = 0; i < g_aBoss.Length; i++)

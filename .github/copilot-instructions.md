@@ -94,6 +94,7 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
 1. **Breakable**: Monitors func_breakable entity health directly
 2. **Counter**: Tracks math_counter values with min/max calculations  
 3. **HPBar**: Complex system using iterator + counter + backup math_counter entities
+4. **PropDynamic**: Monitors prop_dynamic entity health directly (reported as breakable to consumers)
 
 ### Configuration Format:
 ```
@@ -102,7 +103,7 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
     "0"
     {
         "name"          "Boss Name"
-        "method"        "breakable|counter|hpbar"
+        "method"        "breakable|counter|hpbar|prop_dynamic"
         "trigger"       "entity_name:output_name:delay"
         "showtrigger"   "entity_name:output_name:delay"  // Optional
         "killtrigger"   "entity_name:output_name:delay"  // Optional
@@ -112,6 +113,7 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
         "counter"       "math_counter_name"              // For counter method
         "iterator"      "iterator_counter_name"          // For hpbar method
         "backup"        "backup_counter_name"            // For hpbar method
+        "targetname"    "prop_dynamic_name"              // For prop_dynamic method
         
         // Optional settings
         "multitrigger"  "1"                              // Allow multiple triggers
@@ -262,6 +264,6 @@ g_aBoss = new ArrayList();  // Recreate immediately
 
 ## Version Information
 
-- Current version defined in BossHP.inc: "1.4.4"
+- Current version defined in BossHP.inc: "1.6.0"
 - Uses semantic versioning (MAJOR.MINOR.PATCH)
 - Version checks available via BossHP_VERSION constant
