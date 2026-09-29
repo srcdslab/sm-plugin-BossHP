@@ -985,7 +985,7 @@ void ProcessEntitySpawned(int entity)
 		if (sHurtTrigger[0] == '#')
 			iHurtTriggerHammerID = StringToInt(sHurtTrigger[1]);
 
-		if ((iHurtTriggerHammerID == -1 && sHurtTrigger[0] && strcmp(sTargetname, sHurtTrigger, false) == 0) || iHurtTriggerHammerID == iHammerID)
+		if ((iHurtTriggerHammerID == -1 && sHurtTrigger[0] && strcmp(sTargetname, sHurtTrigger, false) == 0) || (iHurtTriggerHammerID != -1 && iHurtTriggerHammerID == iHammerID))
 		{
 			char sHurtOutput[64];
 			Config.GetHurtOutput(sHurtOutput, sizeof(sHurtOutput));
