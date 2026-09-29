@@ -175,12 +175,6 @@ methodmap CBoss < Basic
 		}
 	}
 
-	property bool IsPropDynamic {
-		public get() {
-			return this.dConfig.IsPropDynamic;
-		}
-	}
-
 	property bool IsCounter {
 		public get() {
 			return this.dConfig.IsCounter;

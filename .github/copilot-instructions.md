@@ -91,10 +91,9 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
 ## Boss System Architecture
 
 ### Boss Types:
-1. **Breakable**: Monitors func_breakable entity health directly
+1. **Breakable**: Monitors entity health (m_iHealth) directly; with "scripthealth", syncs it from a VScript variable first
 2. **Counter**: Tracks math_counter values with min/max calculations  
 3. **HPBar**: Complex system using iterator + counter + backup math_counter entities
-4. **PropDynamic**: Monitors prop_dynamic entity health directly (reported as breakable to consumers)
 
 ### Configuration Format:
 ```
@@ -103,17 +102,17 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
     "0"
     {
         "name"          "Boss Name"
-        "method"        "breakable|counter|hpbar|prop_dynamic"
+        "method"        "breakable|counter|hpbar"
         "trigger"       "entity_name:output_name:delay"
         "showtrigger"   "entity_name:output_name:delay"  // Optional
         "killtrigger"   "entity_name:output_name:delay"  // Optional
         
         // Method-specific properties
         "breakable"     "breakable_entity_name"          // For breakable method
+        "scripthealth"  "health"                         // Optional (breakable): VScript variable copied into m_iHealth
         "counter"       "math_counter_name"              // For counter method
         "iterator"      "iterator_counter_name"          // For hpbar method
         "backup"        "backup_counter_name"            // For hpbar method
-        "targetname"    "prop_dynamic_name"              // For prop_dynamic method
         
         // Optional settings
         "multitrigger"  "1"                              // Allow multiple triggers

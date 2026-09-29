@@ -422,9 +422,19 @@ stock void LoadConfig()
 				continue;
 			}
 
+			char sScriptHealth[64];
+			KvConfig.GetString("scripthealth", sScriptHealth, sizeof(sScriptHealth));
+			if (sScriptHealth[0] && !IsValidScriptVariable(sScriptHealth))
+			{
+				g_bConfigError = true;
+				LogError("Invalid \"scripthealth\"(%s) in \"%s\"", sScriptHealth, sSection);
+				continue;
+			}
+
 			CConfigBreakable BreakableConfig = new CConfigBreakable();
 
 			BreakableConfig.SetBreakable(sBreakable);
+			BreakableConfig.SetScriptHealth(sScriptHealth);
 
 			Config = view_as<CConfig>(BreakableConfig);
 		}
@@ -481,23 +491,6 @@ stock void LoadConfig()
 			HPBarConfig.SetBackup(sBackup);
 
 			Config = view_as<CConfig>(HPBarConfig);
-		}
-		else if (strcmp(sMethod, "prop_dynamic", false) == 0)
-		{
-			char sTargetname[64];
-			KvConfig.GetString("targetname", sTargetname, sizeof(sTargetname));
-			if (!sTargetname[0])
-			{
-				g_bConfigError = true;
-				LogError("Could not find \"targetname\" in \"%s\"", sSection);
-				continue;
-			}
-
-			CConfigPropDynamic PropDynamicConfig = new CConfigPropDynamic();
-
-			PropDynamicConfig.SetTargetname(sTargetname);
-
-			Config = view_as<CConfig>(PropDynamicConfig);
 		}
 
 		if (Config == INVALID_HANDLE)
@@ -1127,22 +1120,18 @@ bool BossInit(CBoss _Boss)
 		char sBreakable[64];
 		Config.GetBreakable(sBreakable, sizeof(sBreakable));
 
-		char sClassname[16] = "*";
-		if (_Config.IsPropDynamic)
-			strcopy(sClassname, sizeof(sClassname), "prop_dynamic*");
-
 		int iBreakableEnt = INVALID_ENT_REFERENCE;
 
 		if (!bNameFixup)
 		{
-			iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, sClassname);
+			iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, "*");
 			if (iBreakableEnt == INVALID_ENT_REFERENCE)
 				return false;
 		}
 		else
 		{
 			StrCat(sBreakable, sizeof(sBreakable), "&*");
-			while ((iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, sClassname)) != INVALID_ENT_REFERENCE)
+			while ((iBreakableEnt = FindEntityByTargetname(iBreakableEnt, sBreakable, "*")) != INVALID_ENT_REFERENCE)
 			{
 				bool bSkip = false;
 				for (int i = 0; i < g_aBoss.Length; i++)
@@ -1441,11 +1430,19 @@ bool BossProcess(CBoss _Boss)
 	if (_Boss.IsBreakable)
 	{
 		CBossBreakable Boss = view_as<CBossBreakable>(_Boss);
+		CConfigBreakable Config = view_as<CConfigBreakable>(_Config);
 
 		int iBreakableEnt = Boss.iBreakableEnt;
 
 		if (IsValidEntity(iBreakableEnt))
+		{
+			char sScriptHealth[64];
+			Config.GetScriptHealth(sScriptHealth, sizeof(sScriptHealth));
+			if (sScriptHealth[0])
+				SyncScriptHealth(iBreakableEnt, sScriptHealth);
+
 			iHealth = GetEntProp(iBreakableEnt, Prop_Data, "m_iHealth");
+		}
 		else
 			bInvalid = true;
 	}
@@ -1559,6 +1556,28 @@ bool BossProcess(CBoss _Boss)
 		return false;
 
 	return true;
+}
+
+// Only allow plain identifiers since the name is injected into a VScript snippet
+bool IsValidScriptVariable(const char[] sVariable)
+{
+	for (int i = 0; sVariable[i]; i++)
+	{
+		if (!IsCharAlpha(sVariable[i]) && sVariable[i] != '_' && (i == 0 || !IsCharNumeric(sVariable[i])))
+			return false;
+	}
+
+	return sVariable[0] != '\0';
+}
+
+// Copy a VScript variable from the entity's script scope into its m_iHealth
+void SyncScriptHealth(int entity, const char[] sVariable)
+{
+	char sCode[256];
+	FormatEx(sCode, sizeof(sCode), "if (\"%s\" in this) self.SetHealth(%s.tointeger());", sVariable, sVariable);
+
+	SetVariantString(sCode);
+	AcceptEntityInput(entity, "RunScriptCode");
 }
 
 int FindEntityByTargetname(int entity, const char[] sTargetname, const char[] sClassname="*")
