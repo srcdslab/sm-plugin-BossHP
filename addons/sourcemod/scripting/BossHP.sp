@@ -422,9 +422,19 @@ stock void LoadConfig()
 				continue;
 			}
 
+			char sScriptHealth[64];
+			KvConfig.GetString("scripthealth", sScriptHealth, sizeof(sScriptHealth));
+			if (sScriptHealth[0] && !IsValidScriptVariable(sScriptHealth))
+			{
+				g_bConfigError = true;
+				LogError("Invalid \"scripthealth\"(%s) in \"%s\"", sScriptHealth, sSection);
+				continue;
+			}
+
 			CConfigBreakable BreakableConfig = new CConfigBreakable();
 
 			BreakableConfig.SetBreakable(sBreakable);
+			BreakableConfig.SetScriptHealth(sScriptHealth);
 
 			Config = view_as<CConfig>(BreakableConfig);
 		}
@@ -1420,11 +1430,19 @@ bool BossProcess(CBoss _Boss)
 	if (_Boss.IsBreakable)
 	{
 		CBossBreakable Boss = view_as<CBossBreakable>(_Boss);
+		CConfigBreakable Config = view_as<CConfigBreakable>(_Config);
 
 		int iBreakableEnt = Boss.iBreakableEnt;
 
 		if (IsValidEntity(iBreakableEnt))
+		{
+			char sScriptHealth[64];
+			Config.GetScriptHealth(sScriptHealth, sizeof(sScriptHealth));
+			if (sScriptHealth[0])
+				SyncScriptHealth(iBreakableEnt, sScriptHealth);
+
 			iHealth = GetEntProp(iBreakableEnt, Prop_Data, "m_iHealth");
+		}
 		else
 			bInvalid = true;
 	}
@@ -1538,6 +1556,28 @@ bool BossProcess(CBoss _Boss)
 		return false;
 
 	return true;
+}
+
+// Only allow plain identifiers since the name is injected into a VScript snippet
+bool IsValidScriptVariable(const char[] sVariable)
+{
+	for (int i = 0; sVariable[i]; i++)
+	{
+		if (!IsCharAlpha(sVariable[i]) && sVariable[i] != '_' && (i == 0 || !IsCharNumeric(sVariable[i])))
+			return false;
+	}
+
+	return sVariable[0] != '\0';
+}
+
+// Copy a VScript variable from the entity's script scope into its m_iHealth
+void SyncScriptHealth(int entity, const char[] sVariable)
+{
+	char sCode[256];
+	FormatEx(sCode, sizeof(sCode), "if (\"%s\" in this) self.SetHealth(%s.tointeger());", sVariable, sVariable);
+
+	SetVariantString(sCode);
+	AcceptEntityInput(entity, "RunScriptCode");
 }
 
 int FindEntityByTargetname(int entity, const char[] sTargetname, const char[] sClassname="*")

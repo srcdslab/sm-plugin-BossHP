@@ -91,7 +91,7 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
 ## Boss System Architecture
 
 ### Boss Types:
-1. **Breakable**: Monitors func_breakable entity health directly
+1. **Breakable**: Monitors entity health (m_iHealth) directly; with "scripthealth", syncs it from a VScript variable first
 2. **Counter**: Tracks math_counter values with min/max calculations  
 3. **HPBar**: Complex system using iterator + counter + backup math_counter entities
 
@@ -109,6 +109,7 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
         
         // Method-specific properties
         "breakable"     "breakable_entity_name"          // For breakable method
+        "scripthealth"  "health"                         // Optional (breakable): VScript variable copied into m_iHealth
         "counter"       "math_counter_name"              // For counter method
         "iterator"      "iterator_counter_name"          // For hpbar method
         "backup"        "backup_counter_name"            // For hpbar method
@@ -262,6 +263,6 @@ g_aBoss = new ArrayList();  // Recreate immediately
 
 ## Version Information
 
-- Current version defined in BossHP.inc: "1.4.4"
+- Current version defined in BossHP.inc: "1.6.0"
 - Uses semantic versioning (MAJOR.MINOR.PATCH)
 - Version checks available via BossHP_VERSION constant

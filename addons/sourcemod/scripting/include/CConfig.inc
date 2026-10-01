@@ -291,6 +291,7 @@ methodmap CConfigBreakable < CConfig
 		CConfig myclass = new CConfig();
 
 		myclass.SetString("sBreakable", "");
+		myclass.SetString("sScriptHealth", "");
 
 		myclass.iMethod = eConfigMethod_Breakable;
 
@@ -305,6 +306,16 @@ methodmap CConfigBreakable < CConfig
 	public void SetBreakable(const char[] buffer)
 	{
 		this.SetString("sBreakable", buffer);
+	}
+
+	public bool GetScriptHealth(char[] buffer, int length)
+	{
+		return this.GetString("sScriptHealth", buffer, length);
+	}
+
+	public void SetScriptHealth(const char[] buffer)
+	{
+		this.SetString("sScriptHealth", buffer);
 	}
 }
 
