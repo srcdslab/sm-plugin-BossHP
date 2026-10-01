@@ -475,14 +475,9 @@ stock void LoadConfig()
 				continue;
 			}
 
+			// "backup" is optional: without it, each iterator step is worth the counter's range
 			char sBackup[64];
 			KvConfig.GetString("backup", sBackup, sizeof(sBackup));
-			if (sBackup[0] == '\0')
-			{
-				g_bConfigError = true;
-				LogError("Could not find \"backup\" in \"%s\"", sSection);
-				continue;
-			}
 
 			CConfigHPBar HPBarConfig = new CConfigHPBar();
 
@@ -1255,9 +1250,12 @@ bool BossInit(CBoss _Boss)
 			if (iCounterEnt == INVALID_ENT_REFERENCE)
 				return false;
 
-			iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
-			if (iBackupEnt == INVALID_ENT_REFERENCE)
-				return false;
+			if (sBackup[0] != '\0')
+			{
+				iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
+				if (iBackupEnt == INVALID_ENT_REFERENCE)
+					return false;
+			}
 		}
 		else
 		{
@@ -1293,15 +1291,19 @@ bool BossInit(CBoss _Boss)
 				return false;
 
 			StrCat(sCounter, sizeof(sCounter), sIterator[iTemplateLoc]);
-			StrCat(sBackup, sizeof(sBackup), sIterator[iTemplateLoc]);
 
 			iCounterEnt = FindEntityByTargetname(iCounterEnt, sCounter, "math_counter");
 			if (iCounterEnt == INVALID_ENT_REFERENCE)
 				return false;
 
-			iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
-			if (iBackupEnt == INVALID_ENT_REFERENCE)
-				return false;
+			if (sBackup[0] != '\0')
+			{
+				StrCat(sBackup, sizeof(sBackup), sIterator[iTemplateLoc]);
+
+				iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
+				if (iBackupEnt == INVALID_ENT_REFERENCE)
+					return false;
+			}
 
 			iTemplateNum = StringToInt(sIterator[iTemplateLoc + 1]);
 		}
@@ -1480,11 +1482,18 @@ bool BossProcess(CBoss _Boss)
 		int iCounterEnt = Boss.iCounterEnt;
 		int iBackupEnt = Boss.iBackupEnt;
 
-		if (IsValidEntity(iIteratorEnt) && IsValidEntity(iCounterEnt) && IsValidEntity(iBackupEnt))
+		// No backup configured: the counter is refilled to its full range on each iterator step
+		bool bHasBackup = iBackupEnt != INVALID_ENT_REFERENCE;
+
+		if (IsValidEntity(iIteratorEnt) && IsValidEntity(iCounterEnt) && (!bHasBackup || IsValidEntity(iBackupEnt)))
 		{
 			int iIteratorVal = RoundFloat(GetOutputValueFloat(iIteratorEnt, "m_OutValue"));
 			int iCounterVal = RoundFloat(GetOutputValueFloat(iCounterEnt, "m_OutValue"));
-			int iBackupVal = RoundFloat(GetOutputValueFloat(iBackupEnt, "m_OutValue"));
+			int iBackupVal;
+			if (bHasBackup)
+				iBackupVal = RoundFloat(GetOutputValueFloat(iBackupEnt, "m_OutValue"));
+			else
+				iBackupVal = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMax") - GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMin"));
 
 			if (!Config.bIteratorReverse)
 			{
