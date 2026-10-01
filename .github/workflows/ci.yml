@@ -27,6 +27,10 @@ jobs:
           cp -R deps/basic/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
           git clone --depth=1 https://github.com/srcdslab/sm-plugin-MultiColors.git deps/multicolors
           cp -R deps/multicolors/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
+          git clone --depth=1 https://github.com/srcdslab/sm-plugin-loghelper.git deps/loghelper
+          cp -R deps/loghelper/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
+          git clone --depth=1 https://github.com/srcdslab/sm-plugin-DynamicChannels.git deps/dynamicchannels
+          cp -R deps/dynamicchannels/scripting/include/* addons/sourcemod/scripting/include/
 
       - name: Build sourcemod plugin
         working-directory: addons/sourcemod/scripting
@@ -34,6 +38,7 @@ jobs:
           set -euo pipefail
           mkdir -p ../plugins
           spcomp -i include -o ../plugins/BossHP.smx BossHP.sp
+          spcomp -i include -o ../plugins/BossHUD.smx BossHUD.sp
 
       - name: Create package
         run: |
@@ -41,6 +46,7 @@ jobs:
           mkdir -p /tmp/package/addons/sourcemod/plugins
           cp addons/sourcemod/plugins/*.smx /tmp/package/addons/sourcemod/plugins/
           cp -R addons/sourcemod/configs /tmp/package/addons/sourcemod/
+          cp -R addons/sourcemod/translations /tmp/package/addons/sourcemod/
 
       - name: Upload build archive for test runners
         uses: actions/upload-artifact@v7

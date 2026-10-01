@@ -1,0 +1,96 @@
+"Phrases"
+{
+	"Top Boss"
+	{
+		"en"		"Top boss"
+		"fr"		"Top boss"
+		"zho"		"最高Boss"
+		"chi"		"最高Boss"
+	}
+
+	"Damage"
+	{
+		"en"		"damage"
+		"fr"		"dégât"
+		"zho"		"傷害"
+		"chi"		"伤害"
+	}
+
+	"Hits"
+	{
+		"en"		"hits"
+		"fr"		"coups"
+		"zho"		"擊中次數"
+		"chi"		"击中次数"
+	}
+
+	"Entity"
+	{
+		"en"		"Entity"
+		"fr"		"Entité"
+		"zho"		"實體"
+		"chi"		"实体"
+	}
+
+	"Usage"
+	{
+		"en"		"Usage"
+		"fr"		"Utilisation"
+		"zho"		"使用法"
+		"chi"		"使用法"
+	}
+
+	"Enabled"
+	{
+		"en"		"Enabled"
+		"fr"		"Activé"
+		"zho"		"開啓"
+		"chi"		"开启"
+	}
+
+	"Disabled"
+	{
+		"en"		"Disabled"
+		"fr"		"Désactivé"
+		"zho"		"停用"
+		"chi"		"停用"
+	}
+
+	"Show health has been"
+	{
+		"en"		"Show health has been"
+		"fr"		"Afficher la vie a été"
+		"zho"		"顯示Boss的血量"
+		"chi"		"显示Boss的血量"
+	}
+
+	"Invalid Entity"
+	{
+		"#format"	"{1:i}"
+
+		"en"		"Current entity is invalid (ID: {1})"
+		"fr"		"L'entité actuelle est invalide (ID: {1})"
+		"zho"		"目前實體是無效的（ID: {1}）"
+		"chi"		"目前实体是无效的（ID: {1}）"
+	}
+
+	"Health subtracted"
+	{
+		"#format"	"{1:i},{2:i},{3:i}"
+
+		"en"		"{1} Health subtracted ({2} HP to {3} HP)"
+		"fr"		"{1} points de vie soustrait ({2} HP à {3} HP)"
+		"zho"		"從Boss扣{1}血量（從{2}到{3}）"
+		"chi"		"从Boss扣{1}血量（从{2}到{3}）"
+	}
+
+	"Health added"
+	{
+		"#format"	"{1:i},{2:i},{3:i}"
+
+		"en"		"{1} Health added ({2} HP to {3} HP)"
+		"fr"		"{1} points de vie ajouté ({2} HP à {3} HP)"
+		"zho"		"對Boss加{1}血量（從{2}到{3}）"
+		"chi"		"对Boss加{1}血量（从{2}到{3}）"
+	}
+}
