@@ -4,10 +4,18 @@
 #include <sourcemod>
 #include <sdkhooks>
 #include <sdktools>
+#include <cstrike>
+#include <clientprefs>
 #include <BossHP>
+#include <CEntity>
 #include <outputinfo>
 #include <smlib>
 #include <multicolors>
+#include <loghelper>
+
+#undef REQUIRE_PLUGIN
+#tryinclude <DynamicChannels>
+#define REQUIRE_PLUGIN
 
 #define MathCounterBackupSize 10
 
@@ -23,38 +31,63 @@ ArrayList g_aBoss = null;
 StringMap g_aHadOnce = null;
 
 ConVar g_cvVerboseLog;
+ConVar g_cvIgnoreBots;
 
 char g_sConfigLoaded[PLATFORM_MAX_PATH];
 
 bool g_bConfigLoaded = false;
 bool g_bConfigError = false;
+bool g_bLate = false;
+
+#include "BossHP/hud.sp"
+#include "BossHP/hits.sp"
 
 public Plugin myinfo =
 {
 	name 			= "BossHP",
-	author 			= "BotoX, Cloud Strife, maxime1907",
-	description 	= "Advanced management of entities via configurations",
+	author 			= "BotoX, Cloud Strife, maxime1907, AntiTeal",
+	description 	= "Advanced management of entities via configurations, with a boss health HUD and top hits",
 	version 		= BossHP_VERSION,
-	url 			= ""
+	url 			= "https://github.com/srcdslab/sm-plugin-BossHP"
 };
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
+	g_bLate = late;
+
 	CreateNative("BossHP_IsBossEnt", Native_IsBossEntity);
+	CreateNative("BossHP_GetBossHealth", Native_GetBossHealth);
+	CreateNative("BossHP_GetBossMaxHealth", Native_GetBossMaxHealth);
+	CreateNative("BossHP_GetBossName", Native_GetBossName);
+	CreateNative("BossHP_GetBossHits", Native_GetBossHits);
+	CreateNative("BossHP_GetBossHitsCount", Native_GetBossHitsCount);
+	CreateNative("BossHP_GetBossHitsByClient", Native_GetBossHitsByClient);
+	CreateNative("BossHP_GetBossHitsRank", Native_GetBossHitsRank);
+	CreateNative("BossHP_GetBossTopHits", Native_GetBossTopHits);
+
 	RegPluginLibrary("BossHP");
 	return APLRes_Success;
 }
 
 public void OnPluginStart()
 {
+	LoadTranslations("BossHP.phrases");
+
 	HookEvent("round_start", OnRoundStart, EventHookMode_PostNoCopy);
 	HookEvent("round_end", OnRoundEnd, EventHookMode_PostNoCopy);
 	HookEntityOutput("env_entity_maker", "OnEntitySpawned", OnEnvEntityMakerEntitySpawned);
+
+	// Damage from players, used for the boss hits and to show the health of other entities
+	HookEntityOutput("func_breakable", "OnHealthChanged", OnEntityOutputDamage);
+	HookEntityOutput("func_physbox", "OnHealthChanged", OnEntityOutputDamage);
+	HookEntityOutput("func_physbox_multiplayer", "OnHealthChanged", OnEntityOutputDamage);
+	HookEntityOutput("math_counter", "OutValue", OnEntityOutputDamage);
 
 	RegAdminCmd("sm_bosshp_reload", Command_ReloadConfig, ADMFLAG_CONFIG, "Reload the BossHP Map Config File.");
 	RegAdminCmd("sm_bosshp", Command_IsConfigLoaded, ADMFLAG_GENERIC, "Check if the BossHP Map Config File is loaded.");
 
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 2.0);
+	g_cvIgnoreBots = CreateConVar("sm_bosshp_ignore_bots", "1", "Ignore the damage dealt by bots (boss hits and entity health)", _, true, 0.0, true, 1.0);
 
 	g_hForward_OnAllBossProcessStart = CreateGlobalForward("BossHP_OnAllBossProcessStart", ET_Ignore, Param_Cell);
 	g_hForward_OnAllBossProcessEnd = CreateGlobalForward("BossHP_OnAllBossProcessEnd", ET_Ignore, Param_Cell);
@@ -63,7 +96,16 @@ public void OnPluginStart()
 	g_hForward_OnBossDead = CreateGlobalForward("BossHP_OnBossDead", ET_Ignore, Param_Cell);
 	g_hForward_OnBossDamaged = CreateGlobalForward("BossHP_OnBossDamaged", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Float);
 
+	HUD_OnPluginStart();
+	Hits_OnPluginStart();
+
 	AutoExecConfig(true);
+
+	if (g_bLate)
+	{
+		HUD_OnLateLoad();
+		Hits_OnMapStart();
+	}
 }
 
 public void OnConfigsExecuted()
@@ -73,9 +115,16 @@ public void OnConfigsExecuted()
 	LoadConfig();
 }
 
+public void OnMapStart()
+{
+	Hits_OnMapStart();
+}
+
 public void OnMapEnd()
 {
 	Cleanup();
+	HUD_OnMapEnd();
+	Hits_OnMapEnd();
 }
 
 public void OnRoundStart(Event event, const char[] name, bool dontBroadcast)
@@ -104,11 +153,35 @@ public void OnEntitySpawnedPost(int entity)
 
 	// 1 frame later required to get some properties
 	RequestFrame(ProcessEntitySpawned, entity);
+
+	char sClassname[64];
+	GetEntityClassname(entity, sClassname, sizeof(sClassname));
+	HUD_OnEntitySpawned(entity, sClassname);
 }
 
 public void OnEntitySpawned(int entity, const char[] classname)
 {
 	ProcessEntitySpawned(entity);
+	HUD_OnEntitySpawned(entity, classname);
+}
+
+public void OnEntityDestroyed(int entity)
+{
+	HUD_OnEntityDestroyed(entity);
+}
+
+public void OnEntityOutputDamage(const char[] output, int caller, int activator, float delay)
+{
+	if (!IsValidClient(activator, g_cvIgnoreBots.BoolValue))
+		return;
+
+	HUD_SetClientEntity(activator, caller);
+
+	CBoss Boss;
+	if (IsBossEntity(caller, Boss))
+		Hits_OnBossEntityDamaged(Boss, activator);
+	else
+		HUD_OnEntityDamaged(caller);
 }
 
 public void OnEnvEntityMakerEntitySpawned(const char[] output, int caller, int activator, float delay)
@@ -159,6 +232,7 @@ public void OnTakeDamagePostHurt(int victim, int attacker, int inflictor, float 
 public void OnGameFrame()
 {
 	ProcessGameFrame();
+	HUD_OnGameFrame();
 }
 
 public Action Command_IsConfigLoaded(int client, int args)
@@ -860,6 +934,7 @@ void OnHurtTrigger(int entity, const char[] output, int activator, float damage 
 			if (g_cvVerboseLog.IntValue > 1)
 				LogMessage("Triggered hurt boss %d from output %s (damage = %f)", j, output, damage);
 
+			Hits_OnBossHurt(Boss, activator, damage);
 			CreateForward_OnBossDamaged(Boss, Config, activator, damage);
 		}
 	}
@@ -1037,6 +1112,7 @@ void ProcessGameFrame()
 				_Config.GetName(sBoss, sizeof(sBoss));
 				LogMessage("Deleting boss %s (%d) (KillAt)", sBoss, i);
 			}
+			Hits_OnBossDead(Boss);
 			CreateForward_OnBossDead(Boss);
 			delete Boss;
 			g_aBoss.Erase(i);
@@ -1065,6 +1141,7 @@ void ProcessGameFrame()
 				_Config.GetName(sBoss, sizeof(sBoss));
 				LogMessage("Deleting boss %s (%d) (dead)", sBoss, i);
 			}
+			Hits_OnBossDead(Boss);
 			CreateForward_OnBossDead(Boss);
 			delete Boss;
 			g_aBoss.Erase(i);
@@ -1413,6 +1490,9 @@ bool BossInit(CBoss _Boss)
 	_Config.GetName(sBoss, sizeof(sBoss));
 	if (g_cvVerboseLog.IntValue > 0)
 		LogMessage("Initialized boss %s (template = %d)", sBoss, iTemplateNum);
+
+	Hits_OnBossInitialized(_Boss);
+	HUD_OnBossInitialized(_Boss);
 	CreateForward_OnBossInitialized(_Boss);
 
 	return true;
@@ -1675,53 +1755,174 @@ public void CreateForward_OnAllBossProcessEnd(ArrayList aBoss)
 //  888   Y8888  d8888888888     888       888      Y888P    888       Y88b  d88P
 //  888    Y888 d88P     888     888     8888888     Y8P     8888888888 "Y8888P"
 
-public int Native_IsBossEntity(Handle plugin, int numParams)
+bool IsBossEntity(int entity, CBoss &Boss = view_as<CBoss>(INVALID_HANDLE))
 {
-	if (!g_aBoss || g_aBoss.Length <= 0)
+	if (!g_aBoss || g_aBoss.Length <= 0 || !IsValidEntity(entity))
 		return false;
 
-	int entity = GetNativeCell(1);
-	if (!IsValidEntity(entity))
-		return false;
-
-	CBoss _boss;
-	int i = 0;
-	while (i < g_aBoss.Length)
+	for (int i = 0; i < g_aBoss.Length; i++)
 	{
-		_boss = g_aBoss.Get(i);
-		if (_boss.iEntity == entity)
-			break;
-		else
+		CBoss _boss = g_aBoss.Get(i);
+
+		bool bMatch = _boss.iEntity == entity;
+		if (!bMatch && _boss.IsBreakable)
 		{
-			if (_boss.IsBreakable)
-			{
-				CBossBreakable boss = view_as<CBossBreakable>(_boss);
-				if (boss.iBreakableEnt == entity)
-					break;
-			}
-			if (_boss.IsCounter)
-			{
-				CBossCounter boss = view_as<CBossCounter>(_boss);
-				if (boss.iCounterEnt == entity)
-					break;
-			}
-			if (_boss.IsHPBar)
-			{
-				CBossHPBar boss = view_as<CBossHPBar>(_boss);
-				if (boss.iCounterEnt == entity ||
-					boss.iBackupEnt == entity ||
-					boss.iIteratorEnt == entity)
-					break;
-			}
+			CBossBreakable boss = view_as<CBossBreakable>(_boss);
+			bMatch = boss.iBreakableEnt == entity;
 		}
-		i++;
-	}
+		else if (!bMatch && _boss.IsCounter)
+		{
+			CBossCounter boss = view_as<CBossCounter>(_boss);
+			bMatch = boss.iCounterEnt == entity;
+		}
+		else if (!bMatch && _boss.IsHPBar)
+		{
+			CBossHPBar boss = view_as<CBossHPBar>(_boss);
+			bMatch = boss.iCounterEnt == entity || boss.iBackupEnt == entity || boss.iIteratorEnt == entity;
+		}
 
-	if (i < g_aBoss.Length)
-	{
-		SetNativeCellRef(2, _boss);
-		return true;
+		if (bMatch)
+		{
+			Boss = _boss;
+			return true;
+		}
 	}
 
 	return false;
+}
+
+bool IsValidClient(int client, bool bNoBots = true)
+{
+	if (client <= 0 || client > MaxClients || !IsClientInGame(client))
+		return false;
+
+	return !bNoBots || !IsFakeClient(client);
+}
+
+public int Native_IsBossEntity(Handle plugin, int numParams)
+{
+	CBoss Boss;
+	if (!IsBossEntity(GetNativeCell(1), Boss))
+		return false;
+
+	SetNativeCellRef(2, Boss);
+	return true;
+}
+
+public int Native_GetBossHealth(Handle plugin, int numParams)
+{
+	CBoss Boss;
+	if (!IsBossEntity(GetNativeCell(1), Boss))
+		return -1;
+
+	return Boss.iHealth;
+}
+
+public int Native_GetBossMaxHealth(Handle plugin, int numParams)
+{
+	CBoss Boss;
+	if (!IsBossEntity(GetNativeCell(1), Boss))
+		return -1;
+
+	return Boss.iBaseHealth;
+}
+
+public int Native_GetBossName(Handle plugin, int numParams)
+{
+	int iMaxLen = GetNativeCell(3);
+
+	CBoss Boss;
+	if (iMaxLen <= 0 || !IsBossEntity(GetNativeCell(1), Boss))
+		return false;
+
+	char[] sName = new char[iMaxLen];
+	Boss.dConfig.GetName(sName, iMaxLen);
+	SetNativeString(2, sName, iMaxLen);
+	return true;
+}
+
+public int Native_GetBossHits(Handle plugin, int numParams)
+{
+	CBoss Boss;
+	if (!IsBossEntity(GetNativeCell(1), Boss))
+		return -1;
+
+	int iHits[MAXPLAYERS + 1];
+	Hits_Get(Boss, iHits);
+
+	int iTotal = 0;
+	for (int client = 1; client <= MaxClients; client++)
+		iTotal += iHits[client];
+
+	return iTotal;
+}
+
+public int Native_GetBossHitsCount(Handle plugin, int numParams)
+{
+	CBoss Boss;
+	if (!IsBossEntity(GetNativeCell(1), Boss))
+		return -1;
+
+	int iHits[MAXPLAYERS + 1];
+	Hits_Get(Boss, iHits);
+
+	int aClients[MAXPLAYERS];
+	return Hits_GetRanking(iHits, aClients);
+}
+
+public int Native_GetBossHitsByClient(Handle plugin, int numParams)
+{
+	int client = GetNativeCell(2);
+
+	CBoss Boss;
+	if (!IsValidClient(client) || !IsBossEntity(GetNativeCell(1), Boss))
+		return -1;
+
+	int iHits[MAXPLAYERS + 1];
+	Hits_Get(Boss, iHits);
+	return iHits[client];
+}
+
+public int Native_GetBossHitsRank(Handle plugin, int numParams)
+{
+	int client = GetNativeCell(2);
+
+	CBoss Boss;
+	if (!IsValidClient(client) || !IsBossEntity(GetNativeCell(1), Boss))
+		return -1;
+
+	int iHits[MAXPLAYERS + 1];
+	Hits_Get(Boss, iHits);
+
+	int iRank = 1;
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (iHits[i] > iHits[client])
+			iRank++;
+	}
+
+	return iRank;
+}
+
+public int Native_GetBossTopHits(Handle plugin, int numParams)
+{
+	int iMaxPlayers = GetNativeCell(2);
+
+	CBoss Boss;
+	if (!IsBossEntity(GetNativeCell(1), Boss))
+		return -1;
+
+	int iHits[MAXPLAYERS + 1];
+	Hits_Get(Boss, iHits);
+
+	int aClients[MAXPLAYERS];
+	int iCount = Hits_GetRanking(iHits, aClients);
+
+	if (iMaxPlayers > iCount)
+		iMaxPlayers = iCount;
+
+	if (iMaxPlayers > 0)
+		SetNativeArray(3, aClients, iMaxPlayers);
+
+	return iCount;
 }

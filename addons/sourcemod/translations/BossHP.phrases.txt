@@ -56,6 +56,14 @@
 		"chi"		"停用"
 	}
 
+	"Display boss health"
+	{
+		"en"		"Display boss health"
+		"fr"		"Afficher la vie des boss"
+		"zho"		"顯示Boss的血量"
+		"chi"		"显示Boss的血量"
+	}
+
 	"Show health has been"
 	{
 		"en"		"Show health has been"

@@ -3,22 +3,20 @@
 #endif
 #define _class_centity_
 
+// Non-boss entity with health, displayed on the HUD when a player damages it
 methodmap CEntity < Basic
 {
 	public CEntity()
 	{
 		Basic myclass = new Basic();
 
-		myclass.SetInt("iIndex", 0);
+		myclass.SetInt("iRef", INVALID_ENT_REFERENCE);
 		myclass.SetString("sName", "");
-		myclass.SetInt("iHealth", 0);
-		myclass.SetInt("iMaxHealth", 0);
 		myclass.SetBool("bActive", false);
 		myclass.SetFloat("fLastHitTime", GetGameTime());
 
 		return view_as<CEntity>(myclass);
 	}
-
 
 	public bool GetName(char[] buffer, int length)
 	{
@@ -30,19 +28,10 @@ methodmap CEntity < Basic
 		this.SetString("sName", buffer);
 	}
 
-	property int iIndex {
-		public get() { return this.GetInt("iIndex"); }
-		public set(int index) { this.SetInt("iIndex", index); }
-	}
-
-	property int iHealth {
-		public get() { return this.GetInt("iHealth"); }
-		public set(int health) { this.SetInt("iHealth", health); }
-	}
-
-	property int iMaxHealth {
-		public get() { return this.GetInt("iMaxHealth"); }
-		public set(int maxhealth) { this.SetInt("iMaxHealth", maxhealth); }
+	// Entity reference, use EntRefToEntIndex() to get the entity index
+	property int iRef {
+		public get() { return this.GetInt("iRef"); }
+		public set(int ref) { this.SetInt("iRef", ref); }
 	}
 
 	property float fLastHitTime {
