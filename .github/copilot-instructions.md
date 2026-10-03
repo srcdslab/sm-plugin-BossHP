@@ -2,13 +2,15 @@
 
 ## Repository Overview
 
-This repository contains **BossHP**, a SourceMod plugin for Source engine games that provides advanced management of boss entities through configurable health monitoring systems. The plugin tracks boss health using various methods (breakable entities, math_counter entities, or complex HP bar systems) and provides events/forwards for other plugins to display boss information to players.
+This repository contains **BossHP**, a SourceMod plugin for Source engine games that provides advanced management of boss entities through configurable health monitoring systems. The plugin tracks boss health using various methods (breakable entities, math_counter entities, or complex HP bar systems) displays boss health to players on a HUD, ranks the players who hit each boss, and provides events/forwards and natives for other plugins.
 
 **Key Features:**
 - Multiple boss health tracking methods (breakable, counter, hpbar)
 - Per-map configuration system
 - Template-based multi-instance boss support
-- Event forwarding system for other plugins
+- Boss health HUD (center, game text or hint), with the health of any damaged entity with health
+- Top hits table when a boss dies, with optional money and stats rewards
+- Event forwarding system and natives for other plugins
 - Extensive logging and debugging capabilities
 
 ## Technical Environment
@@ -17,7 +19,7 @@ This repository contains **BossHP**, a SourceMod plugin for Source engine games 
 - **Platform**: SourceMod 1.11.0+ (latest stable release)
 - **Build System**: Native GitHub Actions (.github/workflows/ci.yml)
 - **Compiler**: SourcePawn compiler (spcomp) via rumblefrog/setup-sp
-- **Dependencies**: outputinfo extension, smlib, basic plugin, multicolors
+- **Dependencies**: outputinfo extension, clientprefs, smlib, basic plugin, multicolors, loghelper, DynamicChannels (optional at runtime)
 
 ## Project Structure
 
@@ -25,18 +27,25 @@ This repository contains **BossHP**, a SourceMod plugin for Source engine games 
 addons/sourcemod/
 ├── scripting/
 │   ├── BossHP.sp                 # Main plugin file
+│   ├── BossHP/
+│   │   ├── hud.sp               # Health HUD, damaged entities, admin health commands
+│   │   └── hits.sp              # Boss hits, top hits table, rewards, death notice
 │   └── include/
 │       ├── BossHP.inc           # Public API definitions and forwards
 │       ├── CBoss.inc            # Boss entity methodmap classes
-│       └── CConfig.inc          # Configuration methodmap classes
+│       ├── CConfig.inc          # Configuration methodmap classes
+│       └── CEntity.inc          # Damaged entity methodmap class (HUD)
 ├── configs/bosshp/              # Per-map configuration files
 │   └── [mapname].cfg            # Map-specific boss configurations
+├── translations/
+│   └── BossHP.phrases.txt       # Plugin translations
 └── plugins/                     # Compiled output directory
     └── BossHP.smx               # Compiled plugin
 ```
 
 ### Key Files:
-- **BossHP.sp**: Main plugin logic, event handling, boss processing
+- **BossHP.sp**: Main plugin logic, event handling, boss processing, natives
+- **BossHP/hud.sp** and **BossHP/hits.sp**: HUD and boss hits modules, called directly from BossHP.sp (functions prefixed with `HUD_` and `Hits_`)
 - **BossHP.inc**: Public API with natives and forwards for other plugins
 - **CBoss.inc**: Methodmap classes for different boss types (CBoss, CBossBreakable, CBossCounter, CBossHPBar)
 - **CConfig.inc**: Methodmap classes for configuration management
@@ -137,11 +146,20 @@ forward void BossHP_OnAllBossProcessEnd(ArrayList aBoss);
 forward void BossHP_OnBossInitialized(CBoss boss);
 forward void BossHP_OnBossProcessed(CBoss boss, bool bHealthChanged, bool bShow);
 forward void BossHP_OnBossDead(CBoss boss);
+forward void BossHP_OnBossDamaged(CBoss boss, CConfig config, int activator, float damage);
 ```
 
 ### Natives:
 ```sourcepawn
 native bool BossHP_IsBossEnt(int entity, CBoss &boss = view_as<CBoss>(INVALID_HANDLE));
+native int BossHP_GetBossHealth(int bossEnt);
+native int BossHP_GetBossMaxHealth(int bossEnt);
+native bool BossHP_GetBossName(int bossEnt, char[] buffer, int maxlen);
+native int BossHP_GetBossHits(int bossEnt);
+native int BossHP_GetBossHitsCount(int bossEnt);
+native int BossHP_GetBossHitsByClient(int bossEnt, int client);
+native int BossHP_GetBossHitsRank(int bossEnt, int client);
+native int BossHP_GetBossTopHits(int bossEnt, int maxPlayers, int[] topHits);
 ```
 
 ### Boss Object Properties:
@@ -172,6 +190,8 @@ request, and manual dispatch — no local toolchain installation required.
 - smlib include library
 - basic plugin methodmap library
 - multicolors plugin
+- loghelper include
+- DynamicChannels include
 
 ### CI/CD:
 - GitHub Actions automatically builds on push/PR
