@@ -1482,18 +1482,47 @@ bool BossProcess(CBoss _Boss)
 		int iCounterEnt = Boss.iCounterEnt;
 		int iBackupEnt = Boss.iBackupEnt;
 
-		// No backup configured: the counter is refilled to its full range on each iterator step
 		bool bHasBackup = iBackupEnt != INVALID_ENT_REFERENCE;
 
 		if (IsValidEntity(iIteratorEnt) && IsValidEntity(iCounterEnt) && (!bHasBackup || IsValidEntity(iBackupEnt)))
 		{
 			int iIteratorVal = RoundFloat(GetOutputValueFloat(iIteratorEnt, "m_OutValue"));
 			int iCounterVal = RoundFloat(GetOutputValueFloat(iCounterEnt, "m_OutValue"));
+
+			int iCounterHealth;
+			if (!Config.bCounterReverse)
+			{
+				int iCounterMin = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMin"));
+				iCounterHealth = iCounterVal - iCounterMin;
+			}
+			else
+			{
+				int iCounterMax = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMax"));
+				iCounterHealth = iCounterMax - iCounterVal;
+			}
+
 			int iBackupVal;
 			if (bHasBackup)
 				iBackupVal = RoundFloat(GetOutputValueFloat(iBackupEnt, "m_OutValue"));
 			else
-				iBackupVal = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMax") - GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMin"));
+			{
+				// No backup configured: the map refills the counter on each iterator step,
+				// so a step is worth the highest counter health seen during the current step.
+				// Until the refill is seen, keep the value of the previous step.
+				if (iIteratorVal != Boss.iStepIterator)
+				{
+					Boss.iStepIterator = iIteratorVal;
+					Boss.iStepMax = 0;
+				}
+
+				if (iCounterHealth > Boss.iStepMax)
+				{
+					Boss.iStepMax = iCounterHealth;
+					Boss.iStepValue = iCounterHealth;
+				}
+
+				iBackupVal = Boss.iStepValue;
+			}
 
 			if (!Config.bIteratorReverse)
 			{
@@ -1506,16 +1535,7 @@ bool BossProcess(CBoss _Boss)
 				iHealth = (iIteratorMax - iIteratorVal - 1) * iBackupVal;
 			}
 
-			if (!Config.bCounterReverse)
-			{
-				int iCounterMin = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMin"));
-				iHealth += iCounterVal - iCounterMin;
-			}
-			else
-			{
-				int iCounterMax = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMax"));
-				iHealth += iCounterMax - iCounterVal;
-			}
+			iHealth += iCounterHealth;
 		}
 		else
 			bInvalid = true;

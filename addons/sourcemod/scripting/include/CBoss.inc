@@ -268,8 +268,50 @@ methodmap CBossHPBar < CBossCounter
 
 		myclass.SetInt("iIteratorEnt", INVALID_ENT_REFERENCE);
 		myclass.SetInt("iBackupEnt", INVALID_ENT_REFERENCE);
+		myclass.SetInt("iStepIterator", 0);
+		myclass.SetInt("iStepMax", 0);
+		myclass.SetInt("iStepValue", 0);
 
 		return view_as<CBossHPBar>(myclass);
+	}
+
+	// Without backup: iterator value of the current step
+	property int iStepIterator
+	{
+		public get()
+		{
+			return this.GetInt("iStepIterator");
+		}
+		public set(int value)
+		{
+			this.SetInt("iStepIterator", value);
+		}
+	}
+
+	// Without backup: highest counter health seen during the current step
+	property int iStepMax
+	{
+		public get()
+		{
+			return this.GetInt("iStepMax");
+		}
+		public set(int value)
+		{
+			this.SetInt("iStepMax", value);
+		}
+	}
+
+	// Without backup: health of one iterator step (last refill seen)
+	property int iStepValue
+	{
+		public get()
+		{
+			return this.GetInt("iStepValue");
+		}
+		public set(int value)
+		{
+			this.SetInt("iStepValue", value);
+		}
 	}
 
 	property int iIteratorEnt
