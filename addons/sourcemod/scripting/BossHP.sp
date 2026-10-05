@@ -475,14 +475,9 @@ stock void LoadConfig()
 				continue;
 			}
 
+			// "backup" is optional: without it, each iterator step is worth the counter's range
 			char sBackup[64];
 			KvConfig.GetString("backup", sBackup, sizeof(sBackup));
-			if (sBackup[0] == '\0')
-			{
-				g_bConfigError = true;
-				LogError("Could not find \"backup\" in \"%s\"", sSection);
-				continue;
-			}
 
 			CConfigHPBar HPBarConfig = new CConfigHPBar();
 
@@ -1255,9 +1250,12 @@ bool BossInit(CBoss _Boss)
 			if (iCounterEnt == INVALID_ENT_REFERENCE)
 				return false;
 
-			iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
-			if (iBackupEnt == INVALID_ENT_REFERENCE)
-				return false;
+			if (sBackup[0] != '\0')
+			{
+				iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
+				if (iBackupEnt == INVALID_ENT_REFERENCE)
+					return false;
+			}
 		}
 		else
 		{
@@ -1293,15 +1291,19 @@ bool BossInit(CBoss _Boss)
 				return false;
 
 			StrCat(sCounter, sizeof(sCounter), sIterator[iTemplateLoc]);
-			StrCat(sBackup, sizeof(sBackup), sIterator[iTemplateLoc]);
 
 			iCounterEnt = FindEntityByTargetname(iCounterEnt, sCounter, "math_counter");
 			if (iCounterEnt == INVALID_ENT_REFERENCE)
 				return false;
 
-			iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
-			if (iBackupEnt == INVALID_ENT_REFERENCE)
-				return false;
+			if (sBackup[0] != '\0')
+			{
+				StrCat(sBackup, sizeof(sBackup), sIterator[iTemplateLoc]);
+
+				iBackupEnt = FindEntityByTargetname(iBackupEnt, sBackup, "math_counter");
+				if (iBackupEnt == INVALID_ENT_REFERENCE)
+					return false;
+			}
 
 			iTemplateNum = StringToInt(sIterator[iTemplateLoc + 1]);
 		}
@@ -1480,11 +1482,47 @@ bool BossProcess(CBoss _Boss)
 		int iCounterEnt = Boss.iCounterEnt;
 		int iBackupEnt = Boss.iBackupEnt;
 
-		if (IsValidEntity(iIteratorEnt) && IsValidEntity(iCounterEnt) && IsValidEntity(iBackupEnt))
+		bool bHasBackup = iBackupEnt != INVALID_ENT_REFERENCE;
+
+		if (IsValidEntity(iIteratorEnt) && IsValidEntity(iCounterEnt) && (!bHasBackup || IsValidEntity(iBackupEnt)))
 		{
 			int iIteratorVal = RoundFloat(GetOutputValueFloat(iIteratorEnt, "m_OutValue"));
 			int iCounterVal = RoundFloat(GetOutputValueFloat(iCounterEnt, "m_OutValue"));
-			int iBackupVal = RoundFloat(GetOutputValueFloat(iBackupEnt, "m_OutValue"));
+
+			int iCounterHealth;
+			if (!Config.bCounterReverse)
+			{
+				int iCounterMin = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMin"));
+				iCounterHealth = iCounterVal - iCounterMin;
+			}
+			else
+			{
+				int iCounterMax = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMax"));
+				iCounterHealth = iCounterMax - iCounterVal;
+			}
+
+			int iBackupVal;
+			if (bHasBackup)
+				iBackupVal = RoundFloat(GetOutputValueFloat(iBackupEnt, "m_OutValue"));
+			else
+			{
+				// No backup configured: the map refills the counter on each iterator step,
+				// so a step is worth the highest counter health seen during the current step.
+				// Until the refill is seen, keep the value of the previous step.
+				if (iIteratorVal != Boss.iStepIterator)
+				{
+					Boss.iStepIterator = iIteratorVal;
+					Boss.iStepMax = 0;
+				}
+
+				if (iCounterHealth > Boss.iStepMax)
+				{
+					Boss.iStepMax = iCounterHealth;
+					Boss.iStepValue = iCounterHealth;
+				}
+
+				iBackupVal = Boss.iStepValue;
+			}
 
 			if (!Config.bIteratorReverse)
 			{
@@ -1497,16 +1535,7 @@ bool BossProcess(CBoss _Boss)
 				iHealth = (iIteratorMax - iIteratorVal - 1) * iBackupVal;
 			}
 
-			if (!Config.bCounterReverse)
-			{
-				int iCounterMin = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMin"));
-				iHealth += iCounterVal - iCounterMin;
-			}
-			else
-			{
-				int iCounterMax = RoundFloat(GetEntPropFloat(iCounterEnt, Prop_Data, "m_flMax"));
-				iHealth += iCounterMax - iCounterVal;
-			}
+			iHealth += iCounterHealth;
 		}
 		else
 			bInvalid = true;

@@ -10,7 +10,7 @@
 
 // Version information
 #define BossHP_V_MAJOR   "1"
-#define BossHP_V_MINOR   "6"
+#define BossHP_V_MINOR   "7"
 #define BossHP_V_PATCH   "0"
 
 #define BossHP_VERSION   BossHP_V_MAJOR..."."...BossHP_V_MINOR..."."...BossHP_V_PATCH
