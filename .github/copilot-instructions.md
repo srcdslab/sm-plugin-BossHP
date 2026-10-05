@@ -2,13 +2,15 @@
 
 ## Repository Overview
 
-This repository contains **BossHP**, a SourceMod plugin for Source engine games that provides advanced management of boss entities through configurable health monitoring systems. The plugin tracks boss health using various methods (breakable entities, math_counter entities, or complex HP bar systems) and provides events/forwards for other plugins to display boss information to players.
+This repository contains **BossHP**, a SourceMod plugin for Source engine games that provides advanced management of boss entities through configurable health monitoring systems. The plugin tracks boss health using various methods (breakable entities, math_counter entities, or complex HP bar systems) displays boss health to players on a HUD, ranks the players who hit each boss, and provides events/forwards and natives for other plugins.
 
 **Key Features:**
 - Multiple boss health tracking methods (breakable, counter, hpbar)
 - Per-map configuration system
 - Template-based multi-instance boss support
-- Event forwarding system for other plugins
+- Boss health HUD (center, game text or hint), with the health of any damaged entity with health
+- Top hits table when a boss dies, with optional money and stats rewards
+- Event forwarding system and natives for other plugins
 - Extensive logging and debugging capabilities
 
 ## Technical Environment
@@ -17,26 +19,38 @@ This repository contains **BossHP**, a SourceMod plugin for Source engine games 
 - **Platform**: SourceMod 1.11.0+ (latest stable release)
 - **Build System**: Native GitHub Actions (.github/workflows/ci.yml)
 - **Compiler**: SourcePawn compiler (spcomp) via rumblefrog/setup-sp
-- **Dependencies**: outputinfo extension, smlib, basic plugin, multicolors
+- **Dependencies**: outputinfo extension, clientprefs, smlib, basic plugin, multicolors, loghelper, DynamicChannels (optional at runtime)
 
 ## Project Structure
 
 ```
 addons/sourcemod/
 ├── scripting/
-│   ├── BossHP.sp                 # Main plugin file
+│   ├── BossHP.sp                 # Entry point: shared state, SourceMod callbacks
+│   ├── BossHP/
+│   │   ├── utils.sp             # Shared helpers (entity lookup, math_counter health, strings)
+│   │   ├── triggers.sp          # trigger/showtrigger/killtrigger/hurttrigger matching and hooks
+│   │   ├── config.sp            # Map config loading and parsing, config commands
+│   │   ├── boss.sp              # Boss lifecycle: add, init, process, remove
+│   │   ├── api.sp               # Forwards and natives
+│   │   ├── hud.sp               # Health HUD, damaged entities, admin health commands
+│   │   └── hits.sp              # Boss hits, top hits table, rewards, death notice
 │   └── include/
 │       ├── BossHP.inc           # Public API definitions and forwards
 │       ├── CBoss.inc            # Boss entity methodmap classes
 │       └── CConfig.inc          # Configuration methodmap classes
 ├── configs/bosshp/              # Per-map configuration files
 │   └── [mapname].cfg            # Map-specific boss configurations
+├── translations/
+│   └── BossHP.phrases.txt       # Plugin translations
 └── plugins/                     # Compiled output directory
     └── BossHP.smx               # Compiled plugin
 ```
 
 ### Key Files:
-- **BossHP.sp**: Main plugin logic, event handling, boss processing
+- **BossHP.sp**: Entry point only. Declares the state shared by the modules (`g_aConfig`, `g_aBoss`, ...) and owns every SourceMod callback (`OnPluginStart`, `OnGameFrame`, `OnClientConnected`, ...), which dispatch to the modules
+- **BossHP/*.sp**: Modules included by BossHP.sp. Their entry points are prefixed with the module name (`Config_`, `Bosses_`, `Triggers_`, `API_`, `HUD_`, `Hits_`). Hook callbacks a module registers itself (entity outputs, SDKHooks, timers) live in that module
+- **BossHP/triggers.sp**: The four trigger kinds share one code path, selected by the `BossTrigger` enum (`BossTrigger_Spawn`, `_Show`, `_Kill`, `_Hurt`)
 - **BossHP.inc**: Public API with natives and forwards for other plugins
 - **CBoss.inc**: Methodmap classes for different boss types (CBoss, CBossBreakable, CBossCounter, CBossHPBar)
 - **CConfig.inc**: Methodmap classes for configuration management
@@ -106,6 +120,7 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
         "trigger"       "entity_name:output_name:delay"
         "showtrigger"   "entity_name:output_name:delay"  // Optional
         "killtrigger"   "entity_name:output_name:delay"  // Optional
+        "hurttrigger"   "entity_name:output_name"        // Optional, counts the hits instead of the health entity outputs
         
         // Method-specific properties
         "breakable"     "breakable_entity_name"          // For breakable method
@@ -137,11 +152,20 @@ forward void BossHP_OnAllBossProcessEnd(ArrayList aBoss);
 forward void BossHP_OnBossInitialized(CBoss boss);
 forward void BossHP_OnBossProcessed(CBoss boss, bool bHealthChanged, bool bShow);
 forward void BossHP_OnBossDead(CBoss boss);
+forward void BossHP_OnBossDamaged(CBoss boss, CConfig config, int activator, float damage);
 ```
 
 ### Natives:
 ```sourcepawn
 native bool BossHP_IsBossEnt(int entity, CBoss &boss = view_as<CBoss>(INVALID_HANDLE));
+native int BossHP_GetBossHealth(int bossEnt);
+native int BossHP_GetBossMaxHealth(int bossEnt);
+native bool BossHP_GetBossName(int bossEnt, char[] buffer, int maxlen);
+native int BossHP_GetBossHits(int bossEnt);
+native int BossHP_GetBossHitsCount(int bossEnt);
+native int BossHP_GetBossHitsByClient(int bossEnt, int client);
+native int BossHP_GetBossHitsRank(int bossEnt, int client);
+native int BossHP_GetBossTopHits(int bossEnt, int maxPlayers, int[] topHits);
 ```
 
 ### Boss Object Properties:
@@ -172,6 +196,8 @@ request, and manual dispatch — no local toolchain installation required.
 - smlib include library
 - basic plugin methodmap library
 - multicolors plugin
+- loghelper include
+- DynamicChannels include
 
 ### CI/CD:
 - GitHub Actions automatically builds on push/PR
@@ -184,8 +210,8 @@ request, and manual dispatch — no local toolchain installation required.
 1. Create new methodmap class in CBoss.inc extending CBoss
 2. Create corresponding config class in CConfig.inc extending CConfig
 3. Add method enum value in eConfigMethod
-4. Implement BossInit() and BossProcess() logic in BossHP.sp
-5. Update config parsing in LoadConfig()
+4. Implement BossInit() and BossProcess() logic in BossHP/boss.sp, and list its entities in GetBossEntities()
+5. Update config parsing in Config_Parse() (BossHP/config.sp)
 
 ### Creating Map Configurations:
 1. Create `configs/bosshp/mapname.cfg` file
