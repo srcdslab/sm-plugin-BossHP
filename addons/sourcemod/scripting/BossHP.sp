@@ -23,6 +23,8 @@ ArrayList g_aBoss = null;
 StringMap g_aHadOnce = null;
 
 ConVar g_cvVerboseLog;
+ConVar g_cvInitRetry;
+ConVar g_cvInitTimeout;
 
 char g_sConfigLoaded[PLATFORM_MAX_PATH];
 
@@ -55,6 +57,8 @@ public void OnPluginStart()
 	RegAdminCmd("sm_bosshp", Command_IsConfigLoaded, ADMFLAG_GENERIC, "Check if the BossHP Map Config File is loaded.");
 
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 2.0);
+	g_cvInitRetry = CreateConVar("sm_bosshp_init_retry", "0.1", "Seconds between two lookups of the entities of a triggered boss that is not found yet (0 = every frame)", _, true, 0.0, true, 5.0);
+	g_cvInitTimeout = CreateConVar("sm_bosshp_init_timeout", "60.0", "Seconds after which a triggered boss whose entities are still not found is dropped and logged as a config error (0 = never)", _, true, 0.0);
 
 	g_hForward_OnAllBossProcessStart = CreateGlobalForward("BossHP_OnAllBossProcessStart", ET_Ignore, Param_Cell);
 	g_hForward_OnAllBossProcessEnd = CreateGlobalForward("BossHP_OnAllBossProcessEnd", ET_Ignore, Param_Cell);
@@ -1049,7 +1053,27 @@ void ProcessGameFrame()
 			}
 
 			if (!BossInit(Boss))
+			{
+				// The entities of the boss may spawn a bit after its trigger, but a wrong config
+				// would otherwise walk the entity list every frame until the round ends
+				float fTimeout = g_cvInitTimeout.FloatValue;
+				if (!Boss.fInitDeadline)
+					Boss.fInitDeadline = fGameTime + fTimeout;
+				else if (fTimeout > 0.0 && Boss.fInitDeadline < fGameTime)
+				{
+					char sBoss[64], sMap[PLATFORM_MAX_PATH];
+					_Config.GetName(sBoss, sizeof(sBoss));
+					GetCurrentMap(sMap, sizeof(sMap));
+					LogError("Dropping boss %s on %s: its entities were not found %.0f seconds after the trigger, check the map config", sBoss, sMap, fTimeout);
+					delete Boss;
+					g_aBoss.Erase(i);
+					i--;
+					continue;
+				}
+
+				Boss.fWaitUntil = fGameTime + g_cvInitRetry.FloatValue;
 				continue;
+			}
 		}
 
 		if (!BossProcess(Boss))
