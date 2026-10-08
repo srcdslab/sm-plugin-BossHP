@@ -20,6 +20,7 @@ methodmap CBoss < Basic
 		myclass.SetFloat("fWaitUntil", 0.0);
 		myclass.SetFloat("fShowAt", 0.0);
 		myclass.SetFloat("fKillAt", 0.0);
+		myclass.SetFloat("fInitDeadline", 0.0);
 		myclass.SetInt("iEntity", INVALID_ENT_REFERENCE);
 
 		return view_as<CBoss>(myclass);
@@ -154,6 +155,18 @@ methodmap CBoss < Basic
 		public set(float value)
 		{
 			this.SetFloat("fKillAt", value);
+		}
+	}
+
+	property float fInitDeadline
+	{
+		public get()
+		{
+			return this.GetFloat("fInitDeadline");
+		}
+		public set(float value)
+		{
+			this.SetFloat("fInitDeadline", value);
 		}
 	}
 
