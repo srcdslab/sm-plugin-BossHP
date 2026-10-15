@@ -305,11 +305,35 @@ stock void LoadConfig()
 
 		char sMethod[64];
 		KvConfig.GetString("method", sMethod, sizeof(sMethod));
+
+		// Read the method keyvalues once, used for auto-detection and when building the config
+		char sBreakable[64], sCounter[64], sIterator[64];
+		KvConfig.GetString("breakable", sBreakable, sizeof(sBreakable));
+		KvConfig.GetString("counter", sCounter, sizeof(sCounter));
+		KvConfig.GetString("iterator", sIterator, sizeof(sIterator));
+
+		// Auto-detect method based on keyvalues set if not specified
 		if (!sMethod[0])
 		{
-			g_bConfigError = true;
-			LogError("Could not find \"method\" in \"%s\"", sSection);
-			continue;
+			// Check if both breakable and counter is set
+			if (sBreakable[0] && sCounter[0])
+			{
+				g_bConfigError = true;
+				LogError("Both \"breakable\" and \"counter\" are set in \"%s\", cannot infer \"method\"", sSection);
+				continue;
+			}
+
+			if (sBreakable[0])
+				strcopy(sMethod, sizeof(sMethod), "breakable");
+			else if (sCounter[0])
+				strcopy(sMethod, sizeof(sMethod), sIterator[0] ? "hpbar" : "counter");
+
+			if (!sMethod[0])
+			{
+				g_bConfigError = true;
+				LogError("Could not find \"method\" in \"%s\" and could not infer it (missing \"breakable\", or \"counter\" with optional \"iterator\")", sSection);
+				continue;
+			}
 		}
 
 		char sTrigger[64 * 2];
@@ -413,8 +437,6 @@ stock void LoadConfig()
 
 		if (strcmp(sMethod, "breakable", false) == 0)
 		{
-			char sBreakable[64];
-			KvConfig.GetString("breakable", sBreakable, sizeof(sBreakable));
 			if (sBreakable[0] == '\0')
 			{
 				g_bConfigError = true;
@@ -440,8 +462,6 @@ stock void LoadConfig()
 		}
 		else if (strcmp(sMethod, "counter", false) == 0)
 		{
-			char sCounter[64];
-			KvConfig.GetString("counter", sCounter, sizeof(sCounter));
 			if (sCounter[0] == '\0')
 			{
 				g_bConfigError = true;
@@ -457,8 +477,6 @@ stock void LoadConfig()
 		}
 		else if (strcmp(sMethod, "hpbar", false) == 0)
 		{
-			char sIterator[64];
-			KvConfig.GetString("iterator", sIterator, sizeof(sIterator));
 			if (sIterator[0] == '\0')
 			{
 				g_bConfigError = true;
@@ -466,8 +484,6 @@ stock void LoadConfig()
 				continue;
 			}
 
-			char sCounter[64];
-			KvConfig.GetString("counter", sCounter, sizeof(sCounter));
 			if (sCounter[0] == '\0')
 			{
 				g_bConfigError = true;
