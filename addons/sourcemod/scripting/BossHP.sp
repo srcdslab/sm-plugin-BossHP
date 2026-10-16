@@ -338,11 +338,21 @@ stock void LoadConfig()
 
 		char sTrigger[64 * 2];
 		KvConfig.GetString("trigger", sTrigger, sizeof(sTrigger));
+
+		// Make trigger optional by using defaults for boss type
 		if (!sTrigger[0])
 		{
-			g_bConfigError = true;
-			LogError("Could not find \"trigger\" in \"%s\"", sSection);
-			continue;
+			if (strcmp(sMethod, "breakable", false) == 0 && sBreakable[0])
+				FormatEx(sTrigger, sizeof(sTrigger), "%s:OnTakeDamage", sBreakable);
+			else if ((strcmp(sMethod, "counter", false) == 0 || strcmp(sMethod, "hpbar", false) == 0) && sCounter[0])
+				FormatEx(sTrigger, sizeof(sTrigger), "%s:OutValue", sCounter);
+
+			if (!sTrigger[0])
+			{
+				g_bConfigError = true;
+				LogError("Could not find \"trigger\" in \"%s\" and could not infer it (missing \"breakable\" or \"counter\")", sSection);
+				continue;
+			}
 		}
 
 		int iTriggerDelim;
