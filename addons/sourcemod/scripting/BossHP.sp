@@ -633,7 +633,7 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 		else if (!Config.bNameFixup)
 		{
 			// Repeated triggers from the same entity must not stack pending entries
-			int iEntityRef = EntIndexToEntRef(entity);
+			int iEntityRef = BossEntityToRef(entity);
 			bool bPending = false;
 			for (int j = 0; j < g_aBoss.Length; j++)
 			{
@@ -1147,7 +1147,7 @@ stock CBoss BossAdd(CConfig Config, int entity)
 	if (Boss != INVALID_HANDLE)
 	{
 		Boss.iEntity = entity;
-		Boss.iEntityRef = EntIndexToEntRef(entity);
+		Boss.iEntityRef = BossEntityToRef(entity);
 		Boss.dConfig = Config;
 		Boss.bActive = false;
 
@@ -1165,11 +1165,16 @@ stock CBoss BossAdd(CConfig Config, int entity)
 	return Boss;
 }
 
-// Returns true if an initialized boss already tracks this entity
-stock bool BossIsEntityTracked(int entity)
+// SourceMod hands out non-networked entities such as math_counter and logic_relay as
+// references instead of indexes, and EntIndexToEntRef rejects those, so keep them as they are
+stock int BossEntityToRef(int entity)
 {
-	int iRef = EntIndexToEntRef(entity);
+	return (entity & (1 << 31)) ? entity : EntIndexToEntRef(entity);
+}
 
+// Returns true if an initialized boss already tracks this entity reference
+stock bool BossIsEntityTracked(int iRef)
+{
 	for (int i = 0; i < g_aBoss.Length; i++)
 	{
 		CBoss Boss = g_aBoss.Get(i);
@@ -1238,14 +1243,15 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 			iTemplateNum = StringToInt(sBreakable[iTemplateLoc + 1]);
 		}
 
-		if (BossIsEntityTracked(iBreakableEnt))
+		int iTrackedRef = BossEntityToRef(iBreakableEnt);
+		if (BossIsEntityTracked(iTrackedRef))
 		{
 			bDuplicate = true;
 			return false;
 		}
 
 		Boss.iBreakableEnt = iBreakableEnt;
-		Boss.iTrackedRef = EntIndexToEntRef(iBreakableEnt);
+		Boss.iTrackedRef = iTrackedRef;
 	}
 	else if (_Boss.IsCounter)
 	{
@@ -1302,14 +1308,15 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 			iTemplateNum = StringToInt(sCounter[iTemplateLoc + 1]);
 		}
 
-		if (BossIsEntityTracked(iCounterEnt))
+		int iTrackedRef = BossEntityToRef(iCounterEnt);
+		if (BossIsEntityTracked(iTrackedRef))
 		{
 			bDuplicate = true;
 			return false;
 		}
 
 		Boss.iCounterEnt = iCounterEnt;
-		Boss.iTrackedRef = EntIndexToEntRef(iCounterEnt);
+		Boss.iTrackedRef = iTrackedRef;
 
 		int iCounterOnHitMinCount = GetOutputCount(iCounterEnt, "m_OnHitMin");
 		int iCounterOnHitMaxCount = GetOutputCount(iCounterEnt, "m_OnHitMax");
@@ -1401,7 +1408,8 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 			iTemplateNum = StringToInt(sIterator[iTemplateLoc + 1]);
 		}
 
-		if (BossIsEntityTracked(iIteratorEnt))
+		int iTrackedRef = BossEntityToRef(iIteratorEnt);
+		if (BossIsEntityTracked(iTrackedRef))
 		{
 			bDuplicate = true;
 			return false;
@@ -1410,7 +1418,7 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 		Boss.iIteratorEnt = iIteratorEnt;
 		Boss.iCounterEnt = iCounterEnt;
 		Boss.iBackupEnt = iBackupEnt;
-		Boss.iTrackedRef = EntIndexToEntRef(iIteratorEnt);
+		Boss.iTrackedRef = iTrackedRef;
 
 		int iIteratorOnHitMinCount = GetOutputCount(iIteratorEnt, "m_OnHitMin");
 		int iIteratorOnHitMaxCount = GetOutputCount(iIteratorEnt, "m_OnHitMax");
