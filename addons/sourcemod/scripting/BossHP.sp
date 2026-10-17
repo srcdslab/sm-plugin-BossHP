@@ -630,6 +630,28 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 			if (g_aHadOnce.GetValue(sTemp, bHadOnce) && bHadOnce)
 				continue;
 		}
+		else if (!Config.bNameFixup)
+		{
+			// Repeated triggers from the same entity must not stack pending entries
+			int iEntityRef = BossEntityToRef(entity);
+			bool bPending = false;
+			for (int j = 0; j < g_aBoss.Length; j++)
+			{
+				CBoss tBoss = g_aBoss.Get(j);
+				if (!tBoss.bActive && tBoss.dConfig == Config && tBoss.iEntityRef == iEntityRef)
+				{
+					bPending = true;
+					break;
+				}
+			}
+
+			if (bPending)
+			{
+				if (g_cvVerboseLog.IntValue > 1)
+					LogMessage("Skipped boss %d, already pending for entity %d", i, entity);
+				continue;
+			}
+		}
 
 		if (HookType != view_as<SDKHookType>(-1) && Once)
 		{
@@ -1074,8 +1096,23 @@ void ProcessGameFrame()
 				Boss.fWaitUntil = 0.0;
 			}
 
-			if (!BossInit(Boss))
+			bool bDuplicate = false;
+			if (!BossInit(Boss, bDuplicate))
+			{
+				if (bDuplicate)
+				{
+					if (g_cvVerboseLog.IntValue > 0)
+					{
+						char sBoss[64];
+						_Config.GetName(sBoss, sizeof(sBoss));
+						LogMessage("Deleting boss %s (%d) (duplicate)", sBoss, i);
+					}
+					delete Boss;
+					g_aBoss.Erase(i);
+					i--;
+				}
 				continue;
+			}
 		}
 
 		if (!BossProcess(Boss))
@@ -1110,6 +1147,7 @@ stock CBoss BossAdd(CConfig Config, int entity)
 	if (Boss != INVALID_HANDLE)
 	{
 		Boss.iEntity = entity;
+		Boss.iEntityRef = BossEntityToRef(entity);
 		Boss.dConfig = Config;
 		Boss.bActive = false;
 
@@ -1127,7 +1165,27 @@ stock CBoss BossAdd(CConfig Config, int entity)
 	return Boss;
 }
 
-bool BossInit(CBoss _Boss)
+// SourceMod hands out non-networked entities such as math_counter and logic_relay as
+// references instead of indexes, and EntIndexToEntRef rejects those, so keep them as they are
+stock int BossEntityToRef(int entity)
+{
+	return (entity & (1 << 31)) ? entity : EntIndexToEntRef(entity);
+}
+
+// Returns true if an initialized boss already tracks this entity reference
+stock bool BossIsEntityTracked(int iRef)
+{
+	for (int i = 0; i < g_aBoss.Length; i++)
+	{
+		CBoss Boss = g_aBoss.Get(i);
+		if (Boss.bActive && Boss.iTrackedRef == iRef)
+			return true;
+	}
+	return false;
+}
+
+// bDuplicate is set when another boss already tracks the resolved entity; the caller discards this entry
+bool BossInit(CBoss _Boss, bool &bDuplicate)
 {
 	CConfig _Config = _Boss.dConfig;
 	bool bNameFixup = _Config.bNameFixup;
@@ -1185,7 +1243,15 @@ bool BossInit(CBoss _Boss)
 			iTemplateNum = StringToInt(sBreakable[iTemplateLoc + 1]);
 		}
 
+		int iTrackedRef = BossEntityToRef(iBreakableEnt);
+		if (BossIsEntityTracked(iTrackedRef))
+		{
+			bDuplicate = true;
+			return false;
+		}
+
 		Boss.iBreakableEnt = iBreakableEnt;
+		Boss.iTrackedRef = iTrackedRef;
 	}
 	else if (_Boss.IsCounter)
 	{
@@ -1242,7 +1308,15 @@ bool BossInit(CBoss _Boss)
 			iTemplateNum = StringToInt(sCounter[iTemplateLoc + 1]);
 		}
 
+		int iTrackedRef = BossEntityToRef(iCounterEnt);
+		if (BossIsEntityTracked(iTrackedRef))
+		{
+			bDuplicate = true;
+			return false;
+		}
+
 		Boss.iCounterEnt = iCounterEnt;
+		Boss.iTrackedRef = iTrackedRef;
 
 		int iCounterOnHitMinCount = GetOutputCount(iCounterEnt, "m_OnHitMin");
 		int iCounterOnHitMaxCount = GetOutputCount(iCounterEnt, "m_OnHitMax");
@@ -1334,9 +1408,17 @@ bool BossInit(CBoss _Boss)
 			iTemplateNum = StringToInt(sIterator[iTemplateLoc + 1]);
 		}
 
+		int iTrackedRef = BossEntityToRef(iIteratorEnt);
+		if (BossIsEntityTracked(iTrackedRef))
+		{
+			bDuplicate = true;
+			return false;
+		}
+
 		Boss.iIteratorEnt = iIteratorEnt;
 		Boss.iCounterEnt = iCounterEnt;
 		Boss.iBackupEnt = iBackupEnt;
+		Boss.iTrackedRef = iTrackedRef;
 
 		int iIteratorOnHitMinCount = GetOutputCount(iIteratorEnt, "m_OnHitMin");
 		int iIteratorOnHitMaxCount = GetOutputCount(iIteratorEnt, "m_OnHitMax");
@@ -1369,13 +1451,9 @@ bool BossInit(CBoss _Boss)
 			while ((entity = FindEntityByTargetname(entity, sShowTrigger)) != INVALID_ENT_REFERENCE)
 			{
 				if (strcmp(sShowOutput, "OnTakeDamage", false) == 0)
-				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostShow);
-				}
 				else
-				{
 					HookSingleEntityOutput(entity, sShowOutput, OnEntityOutputShow, true);
-				}
 
 				if (g_cvVerboseLog.IntValue > 0)
 					LogMessage("Hooked showtrigger %s:%s", sShowTrigger, sShowOutput);
@@ -1396,13 +1474,9 @@ bool BossInit(CBoss _Boss)
 			while ((entity = FindEntityByTargetname(entity, sKillTrigger)) != INVALID_ENT_REFERENCE)
 			{
 				if (strcmp(sKillOutput, "OnTakeDamage", false) == 0)
-				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostKill);
-				}
 				else
-				{
 					HookSingleEntityOutput(entity, sKillOutput, OnEntityOutputKill, true);
-				}
 
 				if (g_cvVerboseLog.IntValue > 0)
 					LogMessage("Hooked killtrigger %s:%s", sKillTrigger, sKillOutput);
@@ -1423,13 +1497,9 @@ bool BossInit(CBoss _Boss)
 			while ((entity = FindEntityByTargetname(entity, sHurtTrigger)) != INVALID_ENT_REFERENCE)
 			{
 				if (strcmp(sHurtOutput, "OnTakeDamage", false) == 0)
-				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostHurt);
-				}
 				else
-				{
 					HookSingleEntityOutput(entity, sHurtOutput, OnEntityOutputHurt);
-				}
 
 				if (g_cvVerboseLog.IntValue > 0)
 					LogMessage("Hooked hurttrigger %s:%s", sHurtTrigger, sHurtOutput);

@@ -265,20 +265,26 @@ methodmap CConfig < Basic
 		}
 	}
 
-	property bool IsBreakable {
-		public get() {
+	property bool IsBreakable
+	{
+		public get()
+		{
 			return (this.iMethod == eConfigMethod_Breakable);
 		}
 	}
 
-	property bool IsCounter {
-		public get() {
+	property bool IsCounter
+	{
+		public get()
+		{
 			return (this.iMethod == eConfigMethod_Counter);
 		}
 	}
 
-	property bool IsHPBar {
-		public get() {
+	property bool IsHPBar
+	{
+		public get()
+		{
 			return (this.iMethod == eConfigMethod_HPBar);
 		}
 	}
