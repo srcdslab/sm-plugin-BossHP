@@ -21,6 +21,7 @@ methodmap CBoss < Basic
 		myclass.SetFloat("fShowAt", 0.0);
 		myclass.SetFloat("fKillAt", 0.0);
 		myclass.SetInt("iEntity", INVALID_ENT_REFERENCE);
+		myclass.SetInt("iEntityRef", INVALID_ENT_REFERENCE);
 
 		return view_as<CBoss>(myclass);
 	}
@@ -166,6 +167,19 @@ methodmap CBoss < Basic
 		public set(int value)
 		{
 			this.SetInt("iEntity", value);
+		}
+	}
+
+	// Entity reference of the trigger entity that created this boss
+	property int iEntityRef
+	{
+		public get()
+		{
+			return this.GetInt("iEntityRef");
+		}
+		public set(int value)
+		{
+			this.SetInt("iEntityRef", value);
 		}
 	}
 

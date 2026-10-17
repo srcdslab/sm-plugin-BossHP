@@ -630,6 +630,13 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 			if (g_aHadOnce.GetValue(sTemp, bHadOnce) && bHadOnce)
 				continue;
 		}
+		// Namefixup bosses already avoid duplicates in BossInit by claiming unused template entities
+		else if (!Config.bNameFixup && BossExistsForEntity(Config, entity))
+		{
+			if (g_cvVerboseLog.IntValue > 1)
+				LogMessage("Skipped multitrigger boss %d, already exists for entity %d", i, entity);
+			continue;
+		}
 
 		if (HookType != view_as<SDKHookType>(-1) && Once)
 		{
@@ -1096,6 +1103,23 @@ void ProcessGameFrame()
 	CreateForward_OnAllBossProcessEnd(g_aBoss);
 }
 
+// Returns true if a live boss from this config was already created by this entity.
+// Compares entity references, so an entity that is killed and respawned into the
+// same index counts as a new entity.
+stock bool BossExistsForEntity(CConfig Config, int entity)
+{
+	int iEntityRef = EntIndexToEntRef(entity);
+
+	for (int i = 0; i < g_aBoss.Length; i++)
+	{
+		CBoss Boss = g_aBoss.Get(i);
+
+		if (Boss.dConfig == Config && Boss.iEntityRef == iEntityRef)
+			return true;
+	}
+	return false;
+}
+
 stock CBoss BossAdd(CConfig Config, int entity)
 {
 	CBoss Boss = view_as<CBoss>(INVALID_HANDLE);
@@ -1110,6 +1134,7 @@ stock CBoss BossAdd(CConfig Config, int entity)
 	if (Boss != INVALID_HANDLE)
 	{
 		Boss.iEntity = entity;
+		Boss.iEntityRef = EntIndexToEntRef(entity);
 		Boss.dConfig = Config;
 		Boss.bActive = false;
 
