@@ -11,6 +11,10 @@
 
 #define MathCounterBackupSize 10
 
+#if !defined EFL_KILLME
+	#define EFL_KILLME (1 << 0) // Entity is marked for deletion at the end of the frame
+#endif
+
 Handle g_hForward_OnBossInitialized = INVALID_HANDLE;
 Handle g_hForward_OnBossProcessed = INVALID_HANDLE;
 Handle g_hForward_OnBossDead = INVALID_HANDLE;
@@ -1105,7 +1109,9 @@ void ProcessGameFrame()
 
 // Returns true if a live boss from this config was already created by this entity.
 // Compares entity references, so an entity that is killed and respawned into the
-// same index counts as a new entity.
+// same index counts as a new entity. Entries still waiting to initialize count as
+// live; initialized entries whose health entity died are stale and are ignored, so
+// a replacement boss is not blocked before the next frame removes the old entry.
 stock bool BossExistsForEntity(CConfig Config, int entity)
 {
 	int iEntityRef = EntIndexToEntRef(entity);
@@ -1114,7 +1120,38 @@ stock bool BossExistsForEntity(CConfig Config, int entity)
 	{
 		CBoss Boss = g_aBoss.Get(i);
 
-		if (Boss.dConfig == Config && Boss.iEntityRef == iEntityRef)
+		if (Boss.dConfig != Config || Boss.iEntityRef != iEntityRef)
+			continue;
+
+		if (!Boss.bActive)
+			return true;
+
+		// Health entities checked by BossProcess
+		int iEnts[3] = { INVALID_ENT_REFERENCE, ... };
+		if (Boss.IsBreakable)
+			iEnts[0] = view_as<CBossBreakable>(Boss).iBreakableEnt;
+		else if (Boss.IsCounter)
+			iEnts[0] = view_as<CBossCounter>(Boss).iCounterEnt;
+		else if (Boss.IsHPBar)
+		{
+			CBossHPBar BossHPBar = view_as<CBossHPBar>(Boss);
+			iEnts[0] = BossHPBar.iIteratorEnt;
+			iEnts[1] = BossHPBar.iCounterEnt;
+			iEnts[2] = BossHPBar.iBackupEnt;
+		}
+
+		// A Kill input only marks the entity with EFL_KILLME; it stays valid until the end of the frame
+		bool bAlive = iEnts[0] != INVALID_ENT_REFERENCE;
+		for (int j = 0; j < sizeof(iEnts) && bAlive; j++)
+		{
+			if (j > 0 && iEnts[j] == INVALID_ENT_REFERENCE)
+				continue;
+
+			if (!IsValidEntity(iEnts[j]) || GetEntProp(iEnts[j], Prop_Data, "m_iEFlags") & EFL_KILLME)
+				bAlive = false;
+		}
+
+		if (bAlive)
 			return true;
 	}
 	return false;
