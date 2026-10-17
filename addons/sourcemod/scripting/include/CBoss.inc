@@ -171,7 +171,6 @@ methodmap CBoss < Basic
 		}
 	}
 
-	// Entity reference of the trigger entity that created this boss
 	property int iEntityRef
 	{
 		public get()
@@ -184,7 +183,6 @@ methodmap CBoss < Basic
 		}
 	}
 
-	// Entity reference of the tracked entity: breakable, counter, or hpbar iterator
 	property int iTrackedRef
 	{
 		public get()
@@ -197,20 +195,26 @@ methodmap CBoss < Basic
 		}
 	}
 
-	property bool IsBreakable {
-		public get() {
+	property bool IsBreakable
+	{
+		public get()
+		{
 			return this.dConfig.IsBreakable;
 		}
 	}
 
-	property bool IsCounter {
-		public get() {
+	property bool IsCounter
+	{
+		public get()
+		{
 			return this.dConfig.IsCounter;
 		}
 	}
 
-	property bool IsHPBar {
-		public get() {
+	property bool IsHPBar
+	{
+		public get()
+		{
 			return this.dConfig.IsHPBar;
 		}
 	}
@@ -303,7 +307,6 @@ methodmap CBossHPBar < CBossCounter
 		return view_as<CBossHPBar>(myclass);
 	}
 
-	// Without backup: iterator value of the current step
 	property int iStepIterator
 	{
 		public get()
@@ -316,7 +319,6 @@ methodmap CBossHPBar < CBossCounter
 		}
 	}
 
-	// Without backup: highest counter health seen during the current step
 	property int iStepMax
 	{
 		public get()
@@ -329,7 +331,6 @@ methodmap CBossHPBar < CBossCounter
 		}
 	}
 
-	// Without backup: health of one iterator step (last refill seen)
 	property int iStepValue
 	{
 		public get()

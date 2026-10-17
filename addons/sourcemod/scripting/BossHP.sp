@@ -1451,13 +1451,9 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 			while ((entity = FindEntityByTargetname(entity, sShowTrigger)) != INVALID_ENT_REFERENCE)
 			{
 				if (strcmp(sShowOutput, "OnTakeDamage", false) == 0)
-				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostShow);
-				}
 				else
-				{
 					HookSingleEntityOutput(entity, sShowOutput, OnEntityOutputShow, true);
-				}
 
 				if (g_cvVerboseLog.IntValue > 0)
 					LogMessage("Hooked showtrigger %s:%s", sShowTrigger, sShowOutput);
@@ -1478,13 +1474,9 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 			while ((entity = FindEntityByTargetname(entity, sKillTrigger)) != INVALID_ENT_REFERENCE)
 			{
 				if (strcmp(sKillOutput, "OnTakeDamage", false) == 0)
-				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostKill);
-				}
 				else
-				{
 					HookSingleEntityOutput(entity, sKillOutput, OnEntityOutputKill, true);
-				}
 
 				if (g_cvVerboseLog.IntValue > 0)
 					LogMessage("Hooked killtrigger %s:%s", sKillTrigger, sKillOutput);
@@ -1505,13 +1497,9 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 			while ((entity = FindEntityByTargetname(entity, sHurtTrigger)) != INVALID_ENT_REFERENCE)
 			{
 				if (strcmp(sHurtOutput, "OnTakeDamage", false) == 0)
-				{
 					SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostHurt);
-				}
 				else
-				{
 					HookSingleEntityOutput(entity, sHurtOutput, OnEntityOutputHurt);
-				}
 
 				if (g_cvVerboseLog.IntValue > 0)
 					LogMessage("Hooked hurttrigger %s:%s", sHurtTrigger, sHurtOutput);
