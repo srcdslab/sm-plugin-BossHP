@@ -11,10 +11,6 @@
 
 #define MathCounterBackupSize 10
 
-#if !defined EFL_KILLME
-	#define EFL_KILLME (1 << 0) // Entity is marked for deletion at the end of the frame
-#endif
-
 Handle g_hForward_OnBossInitialized = INVALID_HANDLE;
 Handle g_hForward_OnBossProcessed = INVALID_HANDLE;
 Handle g_hForward_OnBossDead = INVALID_HANDLE;
@@ -634,12 +630,27 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 			if (g_aHadOnce.GetValue(sTemp, bHadOnce) && bHadOnce)
 				continue;
 		}
-		// Namefixup bosses already avoid duplicates in BossInit by claiming unused template entities
-		else if (!Config.bNameFixup && BossExistsForEntity(Config, entity))
+		else if (!Config.bNameFixup)
 		{
-			if (g_cvVerboseLog.IntValue > 1)
-				LogMessage("Skipped multitrigger boss %d, already exists for entity %d", i, entity);
-			continue;
+			// Repeated triggers from the same entity must not stack pending entries
+			int iEntityRef = EntIndexToEntRef(entity);
+			bool bPending = false;
+			for (int j = 0; j < g_aBoss.Length; j++)
+			{
+				CBoss tBoss = g_aBoss.Get(j);
+				if (!tBoss.bActive && tBoss.dConfig == Config && tBoss.iEntityRef == iEntityRef)
+				{
+					bPending = true;
+					break;
+				}
+			}
+
+			if (bPending)
+			{
+				if (g_cvVerboseLog.IntValue > 1)
+					LogMessage("Skipped boss %d, already pending for entity %d", i, entity);
+				continue;
+			}
 		}
 
 		if (HookType != view_as<SDKHookType>(-1) && Once)
@@ -1085,8 +1096,23 @@ void ProcessGameFrame()
 				Boss.fWaitUntil = 0.0;
 			}
 
-			if (!BossInit(Boss))
+			bool bDuplicate = false;
+			if (!BossInit(Boss, bDuplicate))
+			{
+				if (bDuplicate)
+				{
+					if (g_cvVerboseLog.IntValue > 0)
+					{
+						char sBoss[64];
+						_Config.GetName(sBoss, sizeof(sBoss));
+						LogMessage("Deleting boss %s (%d) (duplicate)", sBoss, i);
+					}
+					delete Boss;
+					g_aBoss.Erase(i);
+					i--;
+				}
 				continue;
+			}
 		}
 
 		if (!BossProcess(Boss))
@@ -1105,34 +1131,6 @@ void ProcessGameFrame()
 	}
 
 	CreateForward_OnAllBossProcessEnd(g_aBoss);
-}
-
-// Returns true if a live boss from this config was already created by this entity.
-// Compares entity references, so an entity that is killed and respawned into the
-// same index counts as a new entity. Entries still waiting to initialize count as
-// live; initialized entries whose health entity died are stale and are ignored, so
-// a replacement boss is not blocked before the next frame removes the old entry.
-stock bool BossExistsForEntity(CConfig Config, int entity)
-{
-	int iEntityRef = EntIndexToEntRef(entity);
-
-	for (int i = 0; i < g_aBoss.Length; i++)
-	{
-		CBoss Boss = g_aBoss.Get(i);
-
-		if (Boss.dConfig != Config || Boss.iEntityRef != iEntityRef)
-			continue;
-
-		if (!Boss.bActive)
-			return true;
-
-		bool bInvalid = false;
-		int iHealth = BossGetHealth(Boss, bInvalid);
-
-		if (!BossShouldRetire(iHealth, Boss.iHealth, bInvalid))
-			return true;
-	}
-	return false;
 }
 
 stock CBoss BossAdd(CConfig Config, int entity)
@@ -1167,7 +1165,22 @@ stock CBoss BossAdd(CConfig Config, int entity)
 	return Boss;
 }
 
-bool BossInit(CBoss _Boss)
+// Returns true if an initialized boss already tracks this entity
+stock bool BossIsEntityTracked(int entity)
+{
+	int iRef = EntIndexToEntRef(entity);
+
+	for (int i = 0; i < g_aBoss.Length; i++)
+	{
+		CBoss Boss = g_aBoss.Get(i);
+		if (Boss.bActive && Boss.iTrackedRef == iRef)
+			return true;
+	}
+	return false;
+}
+
+// bDuplicate is set when another boss already tracks the resolved entity; the caller discards this entry
+bool BossInit(CBoss _Boss, bool &bDuplicate)
 {
 	CConfig _Config = _Boss.dConfig;
 	bool bNameFixup = _Config.bNameFixup;
@@ -1225,8 +1238,14 @@ bool BossInit(CBoss _Boss)
 			iTemplateNum = StringToInt(sBreakable[iTemplateLoc + 1]);
 		}
 
+		if (BossIsEntityTracked(iBreakableEnt))
+		{
+			bDuplicate = true;
+			return false;
+		}
+
 		Boss.iBreakableEnt = iBreakableEnt;
-		Boss.iBreakableRef = EntIndexToEntRef(iBreakableEnt);
+		Boss.iTrackedRef = EntIndexToEntRef(iBreakableEnt);
 	}
 	else if (_Boss.IsCounter)
 	{
@@ -1283,8 +1302,14 @@ bool BossInit(CBoss _Boss)
 			iTemplateNum = StringToInt(sCounter[iTemplateLoc + 1]);
 		}
 
+		if (BossIsEntityTracked(iCounterEnt))
+		{
+			bDuplicate = true;
+			return false;
+		}
+
 		Boss.iCounterEnt = iCounterEnt;
-		Boss.iCounterRef = EntIndexToEntRef(iCounterEnt);
+		Boss.iTrackedRef = EntIndexToEntRef(iCounterEnt);
 
 		int iCounterOnHitMinCount = GetOutputCount(iCounterEnt, "m_OnHitMin");
 		int iCounterOnHitMaxCount = GetOutputCount(iCounterEnt, "m_OnHitMax");
@@ -1376,12 +1401,16 @@ bool BossInit(CBoss _Boss)
 			iTemplateNum = StringToInt(sIterator[iTemplateLoc + 1]);
 		}
 
+		if (BossIsEntityTracked(iIteratorEnt))
+		{
+			bDuplicate = true;
+			return false;
+		}
+
 		Boss.iIteratorEnt = iIteratorEnt;
 		Boss.iCounterEnt = iCounterEnt;
 		Boss.iBackupEnt = iBackupEnt;
-		Boss.iIteratorRef = EntIndexToEntRef(iIteratorEnt);
-		Boss.iCounterRef = EntIndexToEntRef(iCounterEnt);
-		Boss.iBackupRef = iBackupEnt != INVALID_ENT_REFERENCE ? EntIndexToEntRef(iBackupEnt) : INVALID_ENT_REFERENCE;
+		Boss.iTrackedRef = EntIndexToEntRef(iIteratorEnt);
 
 		int iIteratorOnHitMinCount = GetOutputCount(iIteratorEnt, "m_OnHitMin");
 		int iIteratorOnHitMaxCount = GetOutputCount(iIteratorEnt, "m_OnHitMax");
@@ -1495,67 +1524,27 @@ bool BossProcess(CBoss _Boss)
 {
 	CConfig _Config = _Boss.dConfig;
 
+	bool bInvalid = false;
+	int iHealth = 0;
 	int iLastHealth = _Boss.iHealth;
 	float fLastChange = _Boss.fLastChange;
 
 	if (_Boss.IsBreakable)
 	{
-		char sScriptHealth[64];
-		view_as<CConfigBreakable>(_Config).GetScriptHealth(sScriptHealth, sizeof(sScriptHealth));
-
-		int iBreakableEnt = BossGetEntity(view_as<CBossBreakable>(_Boss).iBreakableRef);
-		if (sScriptHealth[0] && iBreakableEnt != INVALID_ENT_REFERENCE)
-			SyncScriptHealth(iBreakableEnt, sScriptHealth);
-	}
-
-	bool bInvalid = false;
-	int iHealth = BossGetHealth(_Boss, bInvalid);
-
-	bool bHealthChanged = (iHealth != iLastHealth);
-	if (bHealthChanged)
-	{
-		fLastChange = GetGameTime();
-		_Boss.fLastChange = fLastChange;
-	}
-
-	// Boss hasn't initialized HP yet.
-	if (iHealth == 0 && iLastHealth == 0)
-		return !BossShouldRetire(iHealth, iLastHealth, bInvalid);
-
-	if (iLastHealth == 0)
-		_Boss.iBaseHealth = iHealth;
-
-	_Boss.iLastHealth = iLastHealth;
-	_Boss.iHealth = iHealth;
-
-	bool bShow = _Boss.bShow;
-	if (!bShow && _Boss.fShowAt && _Boss.fShowAt < GetGameTime())
-	{
-		bShow = true;
-		_Boss.bShow = true;
-	}
-
-	CreateForward_OnBossProcessed(_Boss, bHealthChanged, bShow);
-
-	return !BossShouldRetire(iHealth, iLastHealth, bInvalid);
-}
-
-// Reads the current health of an initialized boss. Sets bInvalid when a health entity is gone.
-// Shared by BossProcess and BossExistsForEntity, so it must not fire inputs or forwards.
-int BossGetHealth(CBoss _Boss, bool &bInvalid)
-{
-	CConfig _Config = _Boss.dConfig;
-
-	int iHealth = 0;
-
-	if (_Boss.IsBreakable)
-	{
 		CBossBreakable Boss = view_as<CBossBreakable>(_Boss);
+		CConfigBreakable Config = view_as<CConfigBreakable>(_Config);
 
-		int iBreakableEnt = BossGetEntity(Boss.iBreakableRef);
+		int iBreakableEnt = Boss.iBreakableEnt;
 
-		if (iBreakableEnt != INVALID_ENT_REFERENCE)
+		if (IsValidEntity(iBreakableEnt))
+		{
+			char sScriptHealth[64];
+			Config.GetScriptHealth(sScriptHealth, sizeof(sScriptHealth));
+			if (sScriptHealth[0])
+				SyncScriptHealth(iBreakableEnt, sScriptHealth);
+
 			iHealth = GetEntProp(iBreakableEnt, Prop_Data, "m_iHealth");
+		}
 		else
 			bInvalid = true;
 	}
@@ -1564,9 +1553,9 @@ int BossGetHealth(CBoss _Boss, bool &bInvalid)
 		CBossCounter Boss = view_as<CBossCounter>(_Boss);
 		CConfigCounter Config = view_as<CConfigCounter>(_Config);
 
-		int iCounterEnt = BossGetEntity(Boss.iCounterRef);
+		int iCounterEnt = Boss.iCounterEnt;
 
-		if (iCounterEnt != INVALID_ENT_REFERENCE)
+		if (IsValidEntity(iCounterEnt))
 		{
 			int iCounterVal = RoundFloat(GetOutputValueFloat(iCounterEnt, "m_OutValue"));
 
@@ -1589,13 +1578,13 @@ int BossGetHealth(CBoss _Boss, bool &bInvalid)
 		CBossHPBar Boss = view_as<CBossHPBar>(_Boss);
 		CConfigHPBar Config = view_as<CConfigHPBar>(_Config);
 
-		int iIteratorEnt = BossGetEntity(Boss.iIteratorRef);
-		int iCounterEnt = BossGetEntity(Boss.iCounterRef);
-		int iBackupEnt = BossGetEntity(Boss.iBackupRef);
+		int iIteratorEnt = Boss.iIteratorEnt;
+		int iCounterEnt = Boss.iCounterEnt;
+		int iBackupEnt = Boss.iBackupEnt;
 
-		bool bHasBackup = Boss.iBackupRef != INVALID_ENT_REFERENCE;
+		bool bHasBackup = iBackupEnt != INVALID_ENT_REFERENCE;
 
-		if (iIteratorEnt != INVALID_ENT_REFERENCE && iCounterEnt != INVALID_ENT_REFERENCE && (!bHasBackup || iBackupEnt != INVALID_ENT_REFERENCE))
+		if (IsValidEntity(iIteratorEnt) && IsValidEntity(iCounterEnt) && (!bHasBackup || IsValidEntity(iBackupEnt)))
 		{
 			int iIteratorVal = RoundFloat(GetOutputValueFloat(iIteratorEnt, "m_OutValue"));
 			int iCounterVal = RoundFloat(GetOutputValueFloat(iCounterEnt, "m_OutValue"));
@@ -1659,29 +1648,43 @@ int BossGetHealth(CBoss _Boss, bool &bInvalid)
 	if (iOffset != 0)
 		iHealth += iOffset;
 
-	return iHealth;
-}
+	bool bHealthChanged = (iHealth != iLastHealth);
+	if (bHealthChanged)
+	{
+		fLastChange = GetGameTime();
+		_Boss.fLastChange = fLastChange;
+	}
 
-// Retirement rules for an initialized boss, shared by BossProcess and BossExistsForEntity
-bool BossShouldRetire(int iHealth, int iLastHealth, bool bInvalid)
-{
-	// Boss hasn't initialized HP yet: only retire it if its entities are gone
+	// Boss hasn't initialized HP yet.
 	if (iHealth == 0 && iLastHealth == 0)
-		return bInvalid;
+	{
+		// Boss invalid: Delete boss
+		if (bInvalid)
+			return false;
 
-	// Boss dead/invalid
-	return !iHealth || bInvalid;
-}
+		return true;
+	}
 
-// Resolves an entity reference to an index. Returns INVALID_ENT_REFERENCE when the entity
-// is gone or was killed this frame (a Kill input only sets EFL_KILLME until the frame ends).
-int BossGetEntity(int iRef)
-{
-	int entity = EntRefToEntIndex(iRef);
-	if (entity == INVALID_ENT_REFERENCE || GetEntProp(entity, Prop_Data, "m_iEFlags") & EFL_KILLME)
-		return INVALID_ENT_REFERENCE;
+	if (iLastHealth == 0)
+		_Boss.iBaseHealth = iHealth;
 
-	return entity;
+	_Boss.iLastHealth = iLastHealth;
+	_Boss.iHealth = iHealth;
+
+	bool bShow = _Boss.bShow;
+	if (!bShow && _Boss.fShowAt && _Boss.fShowAt < GetGameTime())
+	{
+		bShow = true;
+		_Boss.bShow = true;
+	}
+
+	CreateForward_OnBossProcessed(_Boss, bHealthChanged, bShow);
+
+	// Boss dead/invalid: Delete boss
+	if (!iHealth || bInvalid)
+		return false;
+
+	return true;
 }
 
 // Only allow plain identifiers since the name is injected into a VScript snippet

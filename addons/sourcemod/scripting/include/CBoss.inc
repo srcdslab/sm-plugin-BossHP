@@ -22,6 +22,7 @@ methodmap CBoss < Basic
 		myclass.SetFloat("fKillAt", 0.0);
 		myclass.SetInt("iEntity", INVALID_ENT_REFERENCE);
 		myclass.SetInt("iEntityRef", INVALID_ENT_REFERENCE);
+		myclass.SetInt("iTrackedRef", INVALID_ENT_REFERENCE);
 
 		return view_as<CBoss>(myclass);
 	}
@@ -183,6 +184,19 @@ methodmap CBoss < Basic
 		}
 	}
 
+	// Entity reference of the tracked entity: breakable, counter, or hpbar iterator
+	property int iTrackedRef
+	{
+		public get()
+		{
+			return this.GetInt("iTrackedRef");
+		}
+		public set(int value)
+		{
+			this.SetInt("iTrackedRef", value);
+		}
+	}
+
 	property bool IsBreakable {
 		public get() {
 			return this.dConfig.IsBreakable;
@@ -209,7 +223,6 @@ methodmap CBossBreakable < CBoss
 		CBoss myclass = new CBoss();
 
 		myclass.SetInt("iBreakableEnt", INVALID_ENT_REFERENCE);
-		myclass.SetInt("iBreakableRef", INVALID_ENT_REFERENCE);
 
 		return view_as<CBossBreakable>(myclass);
 	}
@@ -223,18 +236,6 @@ methodmap CBossBreakable < CBoss
 		public set(int value)
 		{
 			this.SetInt("iBreakableEnt", value);
-		}
-	}
-
-	property int iBreakableRef
-	{
-		public get()
-		{
-			return this.GetInt("iBreakableRef");
-		}
-		public set(int value)
-		{
-			this.SetInt("iBreakableRef", value);
 		}
 	}
 
@@ -258,7 +259,6 @@ methodmap CBossCounter < CBoss
 		CBoss myclass = new CBoss();
 
 		myclass.SetInt("iCounterEnt", INVALID_ENT_REFERENCE);
-		myclass.SetInt("iCounterRef", INVALID_ENT_REFERENCE);
 
 		return view_as<CBossCounter>(myclass);
 	}
@@ -272,18 +272,6 @@ methodmap CBossCounter < CBoss
 		public set(int value)
 		{
 			this.SetInt("iCounterEnt", value);
-		}
-	}
-
-	property int iCounterRef
-	{
-		public get()
-		{
-			return this.GetInt("iCounterRef");
-		}
-		public set(int value)
-		{
-			this.SetInt("iCounterRef", value);
 		}
 	}
 
@@ -308,8 +296,6 @@ methodmap CBossHPBar < CBossCounter
 
 		myclass.SetInt("iIteratorEnt", INVALID_ENT_REFERENCE);
 		myclass.SetInt("iBackupEnt", INVALID_ENT_REFERENCE);
-		myclass.SetInt("iIteratorRef", INVALID_ENT_REFERENCE);
-		myclass.SetInt("iBackupRef", INVALID_ENT_REFERENCE);
 		myclass.SetInt("iStepIterator", 0);
 		myclass.SetInt("iStepMax", 0);
 		myclass.SetInt("iStepValue", 0);
@@ -377,30 +363,6 @@ methodmap CBossHPBar < CBossCounter
 		public set(int value)
 		{
 			this.SetInt("iBackupEnt", value);
-		}
-	}
-
-	property int iIteratorRef
-	{
-		public get()
-		{
-			return this.GetInt("iIteratorRef");
-		}
-		public set(int value)
-		{
-			this.SetInt("iIteratorRef", value);
-		}
-	}
-
-	property int iBackupRef
-	{
-		public get()
-		{
-			return this.GetInt("iBackupRef");
-		}
-		public set(int value)
-		{
-			this.SetInt("iBackupRef", value);
 		}
 	}
 
