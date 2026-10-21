@@ -11,12 +11,12 @@
 
 #define MathCounterBackupSize 10
 
-Handle g_hForward_OnBossInitialized = INVALID_HANDLE;
-Handle g_hForward_OnBossProcessed = INVALID_HANDLE;
-Handle g_hForward_OnBossDead = INVALID_HANDLE;
-Handle g_hForward_OnBossDamaged = INVALID_HANDLE;
-Handle g_hForward_OnAllBossProcessStart = INVALID_HANDLE;
-Handle g_hForward_OnAllBossProcessEnd = INVALID_HANDLE;
+GlobalForward g_hForward_OnBossInitialized = null;
+GlobalForward g_hForward_OnBossProcessed = null;
+GlobalForward g_hForward_OnBossDead = null;
+GlobalForward g_hForward_OnBossDamaged = null;
+GlobalForward g_hForward_OnAllBossProcessStart = null;
+GlobalForward g_hForward_OnAllBossProcessEnd = null;
 
 ArrayList g_aConfig = null;
 ArrayList g_aBoss = null;
@@ -56,12 +56,12 @@ public void OnPluginStart()
 
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 2.0);
 
-	g_hForward_OnAllBossProcessStart = CreateGlobalForward("BossHP_OnAllBossProcessStart", ET_Ignore, Param_Cell);
-	g_hForward_OnAllBossProcessEnd = CreateGlobalForward("BossHP_OnAllBossProcessEnd", ET_Ignore, Param_Cell);
-	g_hForward_OnBossInitialized = CreateGlobalForward("BossHP_OnBossInitialized", ET_Ignore, Param_Cell);
-	g_hForward_OnBossProcessed = CreateGlobalForward("BossHP_OnBossProcessed", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
-	g_hForward_OnBossDead = CreateGlobalForward("BossHP_OnBossDead", ET_Ignore, Param_Cell);
-	g_hForward_OnBossDamaged = CreateGlobalForward("BossHP_OnBossDamaged", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Float);
+	g_hForward_OnAllBossProcessStart = new GlobalForward("BossHP_OnAllBossProcessStart", ET_Ignore, Param_Cell);
+	g_hForward_OnAllBossProcessEnd = new GlobalForward("BossHP_OnAllBossProcessEnd", ET_Ignore, Param_Cell);
+	g_hForward_OnBossInitialized = new GlobalForward("BossHP_OnBossInitialized", ET_Ignore, Param_Cell);
+	g_hForward_OnBossProcessed = new GlobalForward("BossHP_OnBossProcessed", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
+	g_hForward_OnBossDead = new GlobalForward("BossHP_OnBossDead", ET_Ignore, Param_Cell);
+	g_hForward_OnBossDamaged = new GlobalForward("BossHP_OnBossDamaged", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Float);
 
 	AutoExecConfig(true);
 }
@@ -443,7 +443,7 @@ stock void LoadConfig()
 
 		int iOffset = KvConfig.GetNum("offset", 0);
 
-		CConfig Config = view_as<CConfig>(INVALID_HANDLE);
+		CConfig Config = view_as<CConfig>(null);
 
 		if (strcmp(sMethod, "breakable", false) == 0)
 		{
@@ -514,7 +514,7 @@ stock void LoadConfig()
 			Config = view_as<CConfig>(HPBarConfig);
 		}
 
-		if (Config == INVALID_HANDLE)
+		if (Config == null)
 		{
 			g_bConfigError = true;
 			LogError("Invalid \"method\"(%s) in \"%s\"", sMethod, sSection);
@@ -661,7 +661,7 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 
 		CBoss Boss = BossAdd(Config, entity);
 
-		if (Boss != INVALID_HANDLE)
+		if (Boss != null)
 		{
 			if (Once)
 				g_aHadOnce.SetValue(sTemp, true);
@@ -1135,7 +1135,7 @@ void ProcessGameFrame()
 
 stock CBoss BossAdd(CConfig Config, int entity)
 {
-	CBoss Boss = view_as<CBoss>(INVALID_HANDLE);
+	CBoss Boss = view_as<CBoss>(null);
 
 	if (Config.IsBreakable)
 		Boss = new CBossBreakable();
@@ -1144,7 +1144,7 @@ stock CBoss BossAdd(CConfig Config, int entity)
 	else if (Config.IsHPBar)
 		Boss = new CBossHPBar();
 
-	if (Boss != INVALID_HANDLE)
+	if (Boss != null)
 	{
 		Boss.iEntity = entity;
 		Boss.iEntityRef = BossEntityToRef(entity);
