@@ -9,7 +9,7 @@ methodmap CBoss < Basic
 	{
 		Basic myclass = new Basic();
 
-		myclass.SetHandle("dConfig", INVALID_HANDLE);
+		myclass.SetHandle("dConfig", null);
 		myclass.SetBool("bActive", false);
 		myclass.SetBool("bShow", true);
 		myclass.SetInt("iTemplateNum", -1);
