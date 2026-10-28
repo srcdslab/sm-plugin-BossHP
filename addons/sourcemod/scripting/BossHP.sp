@@ -1124,10 +1124,16 @@ void ProcessGameFrame()
 					Boss.fInitDeadline = fGameTime + fTimeout;
 				else if (fTimeout > 0.0 && Boss.fInitDeadline < fGameTime)
 				{
-					char sBoss[64], sMap[PLATFORM_MAX_PATH];
-					_Config.GetName(sBoss, sizeof(sBoss));
-					GetCurrentMap(sMap, sizeof(sMap));
-					LogError("Dropping boss %s on %s: its entities were not found %.0f seconds after the trigger, check the map config", sBoss, sMap, fTimeout);
+					// A multitrigger config adds a new boss on every firing: the config lives
+					// for the whole map, so log the error once per map
+					if (!_Config.bInitErrorLogged)
+					{
+						_Config.bInitErrorLogged = true;
+						char sBoss[64], sMap[PLATFORM_MAX_PATH];
+						_Config.GetName(sBoss, sizeof(sBoss));
+						GetCurrentMap(sMap, sizeof(sMap));
+						LogError("Dropping boss %s on %s: its entities were not found %.0f seconds after the trigger, check the map config", sBoss, sMap, fTimeout);
+					}
 					delete Boss;
 					g_aBoss.Erase(i);
 					i--;
