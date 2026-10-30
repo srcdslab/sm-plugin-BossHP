@@ -117,7 +117,7 @@ void HUD_OnLateLoad()
 	{
 		int entity = INVALID_ENT_REFERENCE;
 		while ((entity = FindEntityByClassname(entity, sClassnames[i])) != INVALID_ENT_REFERENCE)
-			HUD_TrackEntity(EntIndexToEntRef(entity));
+			HUD_TrackEntity(ToEntRef(entity));
 	}
 }
 
@@ -358,7 +358,7 @@ void HUD_OnEntitySpawned(int entity, const char[] sClassname)
 		return;
 
 	// 1 frame later required to get the health
-	RequestFrame(HUD_TrackEntity, EntIndexToEntRef(entity));
+	RequestFrame(HUD_TrackEntity, ToEntRef(entity));
 }
 
 void HUD_TrackEntity(int ref)
@@ -389,7 +389,7 @@ void HUD_TrackEntity(int ref)
 
 void HUD_OnEntityDestroyed(int entity)
 {
-	if (!g_aEntity.Length)
+	if (!g_aEntity || !g_aEntity.Length)
 		return;
 
 	HUD_UntrackEntity(entity);
@@ -400,7 +400,7 @@ void HUD_UntrackEntity(int entity)
 	if (!IsValidEntity(entity))
 		return;
 
-	int i = HUD_FindEntity(EntIndexToEntRef(entity));
+	int i = HUD_FindEntity(ToEntRef(entity));
 	if (i == -1)
 		return;
 
@@ -416,7 +416,9 @@ void HUD_ClearEntities()
 		CEntity Entity = g_aEntity.Get(i);
 		delete Entity;
 	}
-	g_aEntity.Clear();
+
+	delete g_aEntity;
+	g_aEntity = new ArrayList();
 }
 
 int HUD_FindEntity(int ref)
@@ -434,7 +436,7 @@ int HUD_FindEntity(int ref)
 // Called when a non-boss entity is damaged by a player
 void HUD_OnEntityDamaged(int entity)
 {
-	int i = HUD_FindEntity(EntIndexToEntRef(entity));
+	int i = HUD_FindEntity(ToEntRef(entity));
 	if (i == -1)
 		return;
 
@@ -455,7 +457,7 @@ void HUD_OnBossInitialized(CBoss Boss)
 
 void HUD_SetClientEntity(int client, int entity)
 {
-	g_iClientEntityRef[client] = EntIndexToEntRef(entity);
+	g_iClientEntityRef[client] = ToEntRef(entity);
 }
 
 bool IsMathCounter(int entity)

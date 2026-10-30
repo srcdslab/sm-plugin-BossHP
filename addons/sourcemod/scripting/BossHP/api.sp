@@ -164,7 +164,7 @@ public int Native_GetBossHitsByClient(Handle plugin, int numParams)
 	int client = GetNativeCell(2);
 
 	CBoss Boss;
-	if (!IsValidClient(client) || !IsBossEntity(GetNativeCell(1), Boss))
+	if (!IsValidClient(client, g_cvIgnoreBots.BoolValue) || !IsBossEntity(GetNativeCell(1), Boss))
 		return -1;
 
 	int iHits[MAXPLAYERS + 1];
@@ -177,7 +177,7 @@ public int Native_GetBossHitsRank(Handle plugin, int numParams)
 	int client = GetNativeCell(2);
 
 	CBoss Boss;
-	if (!IsValidClient(client) || !IsBossEntity(GetNativeCell(1), Boss))
+	if (!IsValidClient(client, g_cvIgnoreBots.BoolValue) || !IsBossEntity(GetNativeCell(1), Boss))
 		return -1;
 
 	return Hits_GetRank(Boss, client);

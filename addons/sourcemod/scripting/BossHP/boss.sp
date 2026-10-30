@@ -43,7 +43,7 @@ CBoss BossAdd(CConfig Config, int entity)
 		return Boss;
 
 	Boss.iEntity = entity;
-	Boss.iEntityRef = BossEntityToRef(entity);
+	Boss.iEntityRef = ToEntRef(entity);
 	Boss.dConfig = Config;
 	Boss.bActive = false;
 
@@ -246,13 +246,6 @@ int FindBossEntity(CBoss Boss, const char[] sName, const char[] sClassname, bool
 	return iTemplateNum == -1 ? INVALID_ENT_REFERENCE : entity;
 }
 
-// SourceMod hands out non-networked entities such as math_counter and logic_relay as
-// references instead of indexes, and EntIndexToEntRef rejects those, so keep them as they are
-int BossEntityToRef(int entity)
-{
-	return (entity & (1 << 31)) ? entity : EntIndexToEntRef(entity);
-}
-
 // Returns true if an initialized boss already tracks this entity reference
 bool IsEntityTracked(int iRef)
 {
@@ -269,7 +262,7 @@ bool IsEntityTracked(int iRef)
 // Returns true if a boss of this config is already waiting for its entities after a trigger from this entity
 bool IsBossPending(CConfig Config, int entity)
 {
-	int iRef = BossEntityToRef(entity);
+	int iRef = ToEntRef(entity);
 
 	for (int i = 0; i < g_aBoss.Length; i++)
 	{
@@ -386,7 +379,7 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 		Config.bCounterReverse = IsCounterReverse(iCounterEnt);
 	}
 
-	int iTrackedRef = BossEntityToRef(iTrackedEnt);
+	int iTrackedRef = ToEntRef(iTrackedEnt);
 	if (IsEntityTracked(iTrackedRef))
 	{
 		bDuplicate = true;
@@ -410,8 +403,8 @@ bool BossInit(CBoss _Boss, bool &bDuplicate)
 	}
 
 	Hits_OnBossInitialized(_Boss);
-	HUD_OnBossInitialized(_Boss);
 	CreateForward_OnBossInitialized(_Boss);
+	HUD_OnBossInitialized(_Boss);
 
 	return true;
 }

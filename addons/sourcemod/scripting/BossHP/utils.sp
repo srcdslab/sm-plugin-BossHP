@@ -8,6 +8,13 @@ bool IsValidClient(int client, bool bNoBots = true)
 	return !bNoBots || !IsFakeClient(client);
 }
 
+// SourceMod hands out non-networked entities such as math_counter and logic_relay as
+// references instead of indexes, and EntIndexToEntRef rejects those, so keep them as they are
+int ToEntRef(int entity)
+{
+	return (entity & (1 << 31)) ? entity : EntIndexToEntRef(entity);
+}
+
 // For the commands that need a player, the server console gets an error instead
 bool IsInGameCommand(int client)
 {
