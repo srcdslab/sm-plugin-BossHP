@@ -120,7 +120,7 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
         "trigger"       "entity_name:output_name:delay"  // Optional, defaults to breakable:OnTakeDamage or counter:OutValue
         "showtrigger"   "entity_name:output_name:delay"  // Optional
         "killtrigger"   "entity_name:output_name:delay"  // Optional
-        "hurttrigger"   "entity_name:output_name"        // Optional, counts the hits instead of the health entity outputs
+        "hurttrigger"   "entity_name:output_name"        // Optional, counts the hits instead of the health entity outputs (the damage for a breakable boss with :OnTakeDamage)
         
         // Method-specific properties
         "breakable"     "breakable_entity_name"          // For breakable method

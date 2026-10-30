@@ -107,7 +107,7 @@ native int BossHP_GetBossMaxHealth(int bossEnt);
 native bool BossHP_GetBossName(int bossEnt, char[] buffer, int maxlen);
 
 /**
- * Gets the total number of hits (or damage for breakable bosses) on a boss
+ * Gets the total number of hits (or damage for breakable bosses, unless their hurttrigger is an entity output) on a boss
  *
  * @param bossEnt    Any entity of the boss.
  * @return           Total number of hits, -1 if not a boss.
@@ -123,7 +123,7 @@ native int BossHP_GetBossHits(int bossEnt);
 native int BossHP_GetBossHitsCount(int bossEnt);
 
 /**
- * Gets the number of hits (or damage for breakable bosses) from a player on a boss
+ * Gets the number of hits (or damage for breakable bosses, unless their hurttrigger is an entity output) from a player on a boss
  *
  * @param bossEnt    Any entity of the boss.
  * @param client     Client index.

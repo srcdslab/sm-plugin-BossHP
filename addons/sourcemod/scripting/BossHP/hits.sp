@@ -125,6 +125,20 @@ int Hits_GetRanking(const int iHits[MAXPLAYERS + 1], int aClients[MAXPLAYERS])
 	return iCount;
 }
 
+// Breakable bosses count the damage instead of the hits, except with a hurttrigger on an
+// entity output, which only reports that it fired
+bool Hits_CountsDamage(CBoss Boss)
+{
+	if (!Boss.IsBreakable)
+		return false;
+
+	char sTrigger[64], sOutput[64];
+	if (!GetConfigTrigger(Boss.dConfig, BossTrigger_Hurt, sTrigger, sizeof(sTrigger), sOutput, sizeof(sOutput)))
+		return true;
+
+	return strcmp(sOutput, "OnTakeDamage", false) == 0;
+}
+
 int Hits_GetTotal(CBoss Boss)
 {
 	int iHits[MAXPLAYERS + 1];
@@ -202,9 +216,8 @@ void Hits_OnBossHurt(CBoss Boss, int activator, float fDamage)
 	if (Boss.dConfig.bIgnore || !IsValidClient(activator, g_cvIgnoreBots.BoolValue))
 		return;
 
-	// Breakable bosses count the damage instead of the hits, entity outputs report a damage of 1
 	int iAmount = 1;
-	if (Boss.IsBreakable)
+	if (Hits_CountsDamage(Boss))
 	{
 		iAmount = RoundFloat(fDamage);
 		if (iAmount <= 0)
@@ -279,7 +292,7 @@ void Hits_PrintTopHits(int client, CBoss Boss, const int iHits[MAXPLAYERS + 1], 
 
 	char sTitle[64], sUnit[32];
 	FormatEx(sTitle, sizeof(sTitle), "%T", "Top Boss", client);
-	FormatEx(sUnit, sizeof(sUnit), "%T", Boss.IsBreakable ? "Damage" : "Hits", client);
+	FormatEx(sUnit, sizeof(sUnit), "%T", Hits_CountsDamage(Boss) ? "Damage" : "Hits", client);
 
 	char sHeader[160];
 	if (g_cvTopHitsTitle.BoolValue)
