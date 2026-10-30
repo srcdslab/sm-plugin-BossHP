@@ -3,6 +3,16 @@ name: CI
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
+  translations:
+    name: Translations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: srcdslab/smtranslate@v1
+        with:
+          # Set the TRANSLATIONS_FAIL_ON repository variable to "warning" to make warnings blocking
+          fail-on: ${{ vars.TRANSLATIONS_FAIL_ON || 'error' }}
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -27,6 +37,10 @@ jobs:
           cp -R deps/basic/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
           git clone --depth=1 https://github.com/srcdslab/sm-plugin-MultiColors.git deps/multicolors
           cp -R deps/multicolors/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
+          git clone --depth=1 https://github.com/srcdslab/sm-plugin-loghelper.git deps/loghelper
+          cp -R deps/loghelper/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
+          git clone --depth=1 https://github.com/srcdslab/sm-plugin-DynamicChannels.git deps/dynamicchannels
+          cp -R deps/dynamicchannels/scripting/include/* addons/sourcemod/scripting/include/
 
       - name: Build sourcemod plugin
         working-directory: addons/sourcemod/scripting
@@ -41,6 +55,7 @@ jobs:
           mkdir -p /tmp/package/addons/sourcemod/plugins
           cp addons/sourcemod/plugins/*.smx /tmp/package/addons/sourcemod/plugins/
           cp -R addons/sourcemod/configs /tmp/package/addons/sourcemod/
+          cp -R addons/sourcemod/translations /tmp/package/addons/sourcemod/
 
       - name: Upload build archive for test runners
         uses: actions/upload-artifact@v7
