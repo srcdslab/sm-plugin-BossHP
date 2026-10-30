@@ -116,8 +116,8 @@ int entity = FindEntityByTargetname(INVALID_ENT_REFERENCE, "#1234", "math_counte
     "0"
     {
         "name"          "Boss Name"
-        "method"        "breakable|counter|hpbar"
-        "trigger"       "entity_name:output_name:delay"
+        "method"        "breakable|counter|hpbar"        // Optional, inferred from breakable/counter/iterator
+        "trigger"       "entity_name:output_name:delay"  // Optional, defaults to breakable:OnTakeDamage or counter:OutValue
         "showtrigger"   "entity_name:output_name:delay"  // Optional
         "killtrigger"   "entity_name:output_name:delay"  // Optional
         "hurttrigger"   "entity_name:output_name"        // Optional, counts the hits instead of the health entity outputs
@@ -157,7 +157,7 @@ forward void BossHP_OnBossDamaged(CBoss boss, CConfig config, int activator, flo
 
 ### Natives:
 ```sourcepawn
-native bool BossHP_IsBossEnt(int entity, CBoss &boss = view_as<CBoss>(INVALID_HANDLE));
+native bool BossHP_IsBossEnt(int entity, CBoss &boss = view_as<CBoss>(null));
 native int BossHP_GetBossHealth(int bossEnt);
 native int BossHP_GetBossMaxHealth(int bossEnt);
 native bool BossHP_GetBossName(int bossEnt, char[] buffer, int maxlen);

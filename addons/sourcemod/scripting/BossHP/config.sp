@@ -112,7 +112,7 @@ void Config_Load()
 	do
 	{
 		CConfig Config = Config_Parse(KvConfig);
-		if (Config == INVALID_HANDLE)
+		if (Config == null)
 		{
 			g_bConfigError = true;
 			continue;
@@ -134,7 +134,7 @@ void Config_Load()
 	Bosses_Reset();
 }
 
-// Parses the current section, returns INVALID_HANDLE (and logs why) when it is invalid
+// Parses the current section, returns null (and logs why) when it is invalid
 CConfig Config_Parse(KeyValues KvConfig)
 {
 	char sSection[64];
@@ -145,18 +145,37 @@ CConfig Config_Parse(KeyValues KvConfig)
 	if (!sName[0])
 	{
 		LogError("Could not find \"name\" in \"%s\"", sSection);
-		return view_as<CConfig>(INVALID_HANDLE);
+		return view_as<CConfig>(null);
 	}
 
 	// Prevent error and bad display
 	ReplaceString(sName, sizeof(sName), "%", "");
 
+	// Read the method keyvalues once, used to infer "method" and "trigger" when they are not set
+	char sBreakable[64], sCounter[64], sIterator[64];
+	KvConfig.GetString("breakable", sBreakable, sizeof(sBreakable));
+	KvConfig.GetString("counter", sCounter, sizeof(sCounter));
+	KvConfig.GetString("iterator", sIterator, sizeof(sIterator));
+
 	char sMethod[64];
 	KvConfig.GetString("method", sMethod, sizeof(sMethod));
 	if (!sMethod[0])
 	{
-		LogError("Could not find \"method\" in \"%s\"", sSection);
-		return view_as<CConfig>(INVALID_HANDLE);
+		if (sBreakable[0] && sCounter[0])
+		{
+			LogError("Both \"breakable\" and \"counter\" are set in \"%s\", cannot infer \"method\"", sSection);
+			return view_as<CConfig>(null);
+		}
+
+		if (sBreakable[0])
+			strcopy(sMethod, sizeof(sMethod), "breakable");
+		else if (sCounter[0])
+			strcopy(sMethod, sizeof(sMethod), sIterator[0] ? "hpbar" : "counter");
+		else
+		{
+			LogError("Could not find \"method\" in \"%s\" and could not infer it (missing \"breakable\", or \"counter\" with optional \"iterator\")", sSection);
+			return view_as<CConfig>(null);
+		}
 	}
 
 	char sTriggers[BossTrigger_Count][64], sOutputs[BossTrigger_Count][64];
@@ -165,29 +184,42 @@ CConfig Config_Parse(KeyValues KvConfig)
 	for (BossTrigger iType = BossTrigger_Spawn; iType < BossTrigger_Count; iType++)
 	{
 		if (!Config_ParseTrigger(KvConfig, sSection, iType, sTriggers[iType], sizeof(sTriggers[]), sOutputs[iType], sizeof(sOutputs[]), fDelays[iType]))
-			return view_as<CConfig>(INVALID_HANDLE);
+			return view_as<CConfig>(null);
 	}
 
+	// Without "trigger", the boss is created when its breakable is hit or its counter changes
 	if (!sTriggers[BossTrigger_Spawn][0])
 	{
-		LogError("Could not find \"trigger\" in \"%s\"", sSection);
-		return view_as<CConfig>(INVALID_HANDLE);
+		if (strcmp(sMethod, "breakable", false) == 0 && sBreakable[0])
+		{
+			strcopy(sTriggers[BossTrigger_Spawn], sizeof(sTriggers[]), sBreakable);
+			strcopy(sOutputs[BossTrigger_Spawn], sizeof(sOutputs[]), "OnTakeDamage");
+		}
+		else if ((strcmp(sMethod, "counter", false) == 0 || strcmp(sMethod, "hpbar", false) == 0) && sCounter[0])
+		{
+			strcopy(sTriggers[BossTrigger_Spawn], sizeof(sTriggers[]), sCounter);
+			strcopy(sOutputs[BossTrigger_Spawn], sizeof(sOutputs[]), "OutValue");
+		}
+		else
+		{
+			LogError("Could not find \"trigger\" in \"%s\" and could not infer it (missing \"breakable\" or \"counter\")", sSection);
+			return view_as<CConfig>(null);
+		}
 	}
 
-	CConfig Config = view_as<CConfig>(INVALID_HANDLE);
+	CConfig Config = view_as<CConfig>(null);
 
 	if (strcmp(sMethod, "breakable", false) == 0)
 	{
-		char sBreakable[64];
-		if (!Config_GetRequiredString(KvConfig, sSection, "breakable", sBreakable, sizeof(sBreakable)))
-			return view_as<CConfig>(INVALID_HANDLE);
+		if (!Config_RequireString(sSection, "breakable", sBreakable))
+			return view_as<CConfig>(null);
 
 		char sScriptHealth[64];
 		KvConfig.GetString("scripthealth", sScriptHealth, sizeof(sScriptHealth));
 		if (sScriptHealth[0] && !IsValidScriptVariable(sScriptHealth))
 		{
 			LogError("Invalid \"scripthealth\"(%s) in \"%s\"", sScriptHealth, sSection);
-			return view_as<CConfig>(INVALID_HANDLE);
+			return view_as<CConfig>(null);
 		}
 
 		CConfigBreakable BreakableConfig = new CConfigBreakable();
@@ -198,9 +230,8 @@ CConfig Config_Parse(KeyValues KvConfig)
 	}
 	else if (strcmp(sMethod, "counter", false) == 0)
 	{
-		char sCounter[64];
-		if (!Config_GetRequiredString(KvConfig, sSection, "counter", sCounter, sizeof(sCounter)))
-			return view_as<CConfig>(INVALID_HANDLE);
+		if (!Config_RequireString(sSection, "counter", sCounter))
+			return view_as<CConfig>(null);
 
 		CConfigCounter CounterConfig = new CConfigCounter();
 		CounterConfig.SetCounter(sCounter);
@@ -209,10 +240,9 @@ CConfig Config_Parse(KeyValues KvConfig)
 	}
 	else if (strcmp(sMethod, "hpbar", false) == 0)
 	{
-		char sIterator[64], sCounter[64];
-		if (!Config_GetRequiredString(KvConfig, sSection, "iterator", sIterator, sizeof(sIterator)) ||
-			!Config_GetRequiredString(KvConfig, sSection, "counter", sCounter, sizeof(sCounter)))
-			return view_as<CConfig>(INVALID_HANDLE);
+		if (!Config_RequireString(sSection, "iterator", sIterator) ||
+			!Config_RequireString(sSection, "counter", sCounter))
+			return view_as<CConfig>(null);
 
 		// "backup" is optional: without it, each iterator step is worth the counter's range
 		char sBackup[64];
@@ -228,7 +258,7 @@ CConfig Config_Parse(KeyValues KvConfig)
 	else
 	{
 		LogError("Invalid \"method\"(%s) in \"%s\"", sMethod, sSection);
-		return view_as<CConfig>(INVALID_HANDLE);
+		return view_as<CConfig>(null);
 	}
 
 	Config.SetName(sName);
@@ -249,9 +279,8 @@ CConfig Config_Parse(KeyValues KvConfig)
 	return Config;
 }
 
-bool Config_GetRequiredString(KeyValues KvConfig, const char[] sSection, const char[] sKey, char[] sValue, int iMaxLen)
+bool Config_RequireString(const char[] sSection, const char[] sKey, const char[] sValue)
 {
-	KvConfig.GetString(sKey, sValue, iMaxLen);
 	if (sValue[0])
 		return true;
 

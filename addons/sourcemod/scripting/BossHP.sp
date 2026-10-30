@@ -29,6 +29,8 @@ bool g_bConfigError = false;
 
 ConVar g_cvVerboseLog;
 ConVar g_cvIgnoreBots;
+ConVar g_cvInitRetry;
+ConVar g_cvInitTimeout;
 
 bool g_bLate = false;
 
@@ -64,6 +66,8 @@ public void OnPluginStart()
 
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 2.0);
 	g_cvIgnoreBots = CreateConVar("sm_bosshp_ignore_bots", "1", "Ignore the damage dealt by bots (boss hits and entity health)", _, true, 0.0, true, 1.0);
+	g_cvInitRetry = CreateConVar("sm_bosshp_init_retry", "0.1", "Seconds between two lookups of the entities of a triggered boss that is not found yet (0 = every frame)", _, true, 0.0, true, 5.0);
+	g_cvInitTimeout = CreateConVar("sm_bosshp_init_timeout", "60.0", "Seconds after which a triggered boss whose entities are still not found is dropped and logged as a config error (0 = never)", _, true, 0.0);
 
 	HookEvent("round_end", OnRoundEnd, EventHookMode_PostNoCopy);
 	HookEvent("round_start", OnRoundStart, EventHookMode_PostNoCopy);

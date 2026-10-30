@@ -287,8 +287,15 @@ void OnSpawnTrigger(int iConfig, CConfig Config, int entity, const char[] sTrigg
 		if (bTakeDamage)
 			UnhookTriggerDamage(entity, BossTrigger_Spawn);
 	}
+	else if (!Config.bNameFixup && IsBossPending(Config, entity))
+	{
+		// Repeated triggers from the same entity must not stack pending bosses
+		if (g_cvVerboseLog.IntValue > 1)
+			LogMessage("Skipped boss %d, already pending for entity %d", iConfig, entity);
+		return;
+	}
 
-	if (BossAdd(Config, entity) == INVALID_HANDLE)
+	if (BossAdd(Config, entity) == null)
 		return;
 
 	if (bOnce)

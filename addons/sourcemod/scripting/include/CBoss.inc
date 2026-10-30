@@ -9,7 +9,7 @@ methodmap CBoss < Basic
 	{
 		Basic myclass = new Basic();
 
-		myclass.SetHandle("dConfig", INVALID_HANDLE);
+		myclass.SetHandle("dConfig", null);
 		myclass.SetBool("bActive", false);
 		myclass.SetBool("bShow", true);
 		myclass.SetInt("iTemplateNum", -1);
@@ -20,7 +20,10 @@ methodmap CBoss < Basic
 		myclass.SetFloat("fWaitUntil", 0.0);
 		myclass.SetFloat("fShowAt", 0.0);
 		myclass.SetFloat("fKillAt", 0.0);
+		myclass.SetFloat("fInitDeadline", 0.0);
 		myclass.SetInt("iEntity", INVALID_ENT_REFERENCE);
+		myclass.SetInt("iEntityRef", INVALID_ENT_REFERENCE);
+		myclass.SetInt("iTrackedRef", INVALID_ENT_REFERENCE);
 
 		return view_as<CBoss>(myclass);
 	}
@@ -157,6 +160,18 @@ methodmap CBoss < Basic
 		}
 	}
 
+	property float fInitDeadline
+	{
+		public get()
+		{
+			return this.GetFloat("fInitDeadline");
+		}
+		public set(float value)
+		{
+			this.SetFloat("fInitDeadline", value);
+		}
+	}
+
 	property int iEntity
 	{
 		public get()
@@ -169,20 +184,50 @@ methodmap CBoss < Basic
 		}
 	}
 
-	property bool IsBreakable {
-		public get() {
+	property int iEntityRef
+	{
+		public get()
+		{
+			return this.GetInt("iEntityRef");
+		}
+		public set(int value)
+		{
+			this.SetInt("iEntityRef", value);
+		}
+	}
+
+	property int iTrackedRef
+	{
+		public get()
+		{
+			return this.GetInt("iTrackedRef");
+		}
+		public set(int value)
+		{
+			this.SetInt("iTrackedRef", value);
+		}
+	}
+
+	property bool IsBreakable
+	{
+		public get()
+		{
 			return this.dConfig.IsBreakable;
 		}
 	}
 
-	property bool IsCounter {
-		public get() {
+	property bool IsCounter
+	{
+		public get()
+		{
 			return this.dConfig.IsCounter;
 		}
 	}
 
-	property bool IsHPBar {
-		public get() {
+	property bool IsHPBar
+	{
+		public get()
+		{
 			return this.dConfig.IsHPBar;
 		}
 	}
@@ -275,7 +320,6 @@ methodmap CBossHPBar < CBossCounter
 		return view_as<CBossHPBar>(myclass);
 	}
 
-	// Without backup: iterator value of the current step
 	property int iStepIterator
 	{
 		public get()
@@ -288,7 +332,6 @@ methodmap CBossHPBar < CBossCounter
 		}
 	}
 
-	// Without backup: highest counter health seen during the current step
 	property int iStepMax
 	{
 		public get()
@@ -301,7 +344,6 @@ methodmap CBossHPBar < CBossCounter
 		}
 	}
 
-	// Without backup: health of one iterator step (last refill seen)
 	property int iStepValue
 	{
 		public get()

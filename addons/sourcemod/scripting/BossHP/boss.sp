@@ -30,7 +30,7 @@ void Bosses_Reset()
 
 CBoss BossAdd(CConfig Config, int entity)
 {
-	CBoss Boss = view_as<CBoss>(INVALID_HANDLE);
+	CBoss Boss = view_as<CBoss>(null);
 
 	if (Config.IsBreakable)
 		Boss = new CBossBreakable();
@@ -39,10 +39,11 @@ CBoss BossAdd(CConfig Config, int entity)
 	else if (Config.IsHPBar)
 		Boss = new CBossHPBar();
 
-	if (Boss == INVALID_HANDLE)
+	if (Boss == null)
 		return Boss;
 
 	Boss.iEntity = entity;
+	Boss.iEntityRef = BossEntityToRef(entity);
 	Boss.dConfig = Config;
 	Boss.bActive = false;
 
@@ -107,8 +108,40 @@ void Bosses_OnGameFrame()
 				Boss.fWaitUntil = 0.0;
 			}
 
-			if (!BossInit(Boss))
+			bool bDuplicate = false;
+			if (!BossInit(Boss, bDuplicate))
+			{
+				if (bDuplicate)
+				{
+					BossRemove(i--, "duplicate", false);
+					continue;
+				}
+
+				// The entities of the boss may spawn a bit after its trigger, but a wrong config
+				// would otherwise walk the entity list every frame until the round ends
+				float fTimeout = g_cvInitTimeout.FloatValue;
+				if (!Boss.fInitDeadline)
+					Boss.fInitDeadline = fGameTime + fTimeout;
+				else if (fTimeout > 0.0 && Boss.fInitDeadline < fGameTime)
+				{
+					// A multitrigger config adds a new boss on every firing: the config lives
+					// for the whole map, so log the error once per map
+					CConfig Config = Boss.dConfig;
+					if (!Config.bInitErrorLogged)
+					{
+						Config.bInitErrorLogged = true;
+						char sBoss[64], sMap[PLATFORM_MAX_PATH];
+						Config.GetName(sBoss, sizeof(sBoss));
+						GetCurrentMap(sMap, sizeof(sMap));
+						LogError("Dropping boss %s on %s: its entities were not found %.0f seconds after the trigger, check the map config", sBoss, sMap, fTimeout);
+					}
+					BossRemove(i--, "init timeout", false);
+					continue;
+				}
+
+				Boss.fWaitUntil = fGameTime + g_cvInitRetry.FloatValue;
 				continue;
+			}
 		}
 
 		if (!BossProcess(Boss))
@@ -168,7 +201,7 @@ bool IsBossHealthEntity(CBoss Boss, int entity)
 }
 
 // Finds the boss of an entity: its trigger entity or one of its health entities
-bool IsBossEntity(int entity, CBoss &Boss = view_as<CBoss>(INVALID_HANDLE))
+bool IsBossEntity(int entity, CBoss &Boss = view_as<CBoss>(null))
 {
 	if (!g_aBoss || !IsValidEntity(entity))
 		return false;
@@ -213,6 +246,41 @@ int FindBossEntity(CBoss Boss, const char[] sName, const char[] sClassname, bool
 	return iTemplateNum == -1 ? INVALID_ENT_REFERENCE : entity;
 }
 
+// SourceMod hands out non-networked entities such as math_counter and logic_relay as
+// references instead of indexes, and EntIndexToEntRef rejects those, so keep them as they are
+int BossEntityToRef(int entity)
+{
+	return (entity & (1 << 31)) ? entity : EntIndexToEntRef(entity);
+}
+
+// Returns true if an initialized boss already tracks this entity reference
+bool IsEntityTracked(int iRef)
+{
+	for (int i = 0; i < g_aBoss.Length; i++)
+	{
+		CBoss Boss = g_aBoss.Get(i);
+		if (Boss.bActive && Boss.iTrackedRef == iRef)
+			return true;
+	}
+
+	return false;
+}
+
+// Returns true if a boss of this config is already waiting for its entities after a trigger from this entity
+bool IsBossPending(CConfig Config, int entity)
+{
+	int iRef = BossEntityToRef(entity);
+
+	for (int i = 0; i < g_aBoss.Length; i++)
+	{
+		CBoss Boss = g_aBoss.Get(i);
+		if (!Boss.bActive && Boss.dConfig == Config && Boss.iEntityRef == iRef)
+			return true;
+	}
+
+	return false;
+}
+
 bool IsEntityUsedByOtherBoss(CBoss Boss, int entity)
 {
 	for (int i = 0; i < g_aBoss.Length; i++)
@@ -233,9 +301,12 @@ bool IsEntityUsedByOtherBoss(CBoss Boss, int entity)
 //  ##  ##   ###  ##     ##
 // #### ##    ## ####    ##
 
-// Finds the entities of the boss, returns false while they do not exist yet
-bool BossInit(CBoss _Boss)
+// Finds the entities of the boss, returns false while they do not exist yet. bDuplicate is set
+// when another boss already tracks the entity found: the caller removes this one.
+bool BossInit(CBoss _Boss, bool &bDuplicate)
 {
+	int iTrackedEnt = INVALID_ENT_REFERENCE;
+
 	CConfig _Config = _Boss.dConfig;
 	bool bNameFixup = _Config.bNameFixup;
 	int iTemplateNum = -1;
@@ -253,6 +324,7 @@ bool BossInit(CBoss _Boss)
 			return false;
 
 		Boss.iBreakableEnt = iBreakableEnt;
+		iTrackedEnt = iBreakableEnt;
 	}
 	else if (_Boss.IsCounter)
 	{
@@ -267,6 +339,7 @@ bool BossInit(CBoss _Boss)
 			return false;
 
 		Boss.iCounterEnt = iCounterEnt;
+		iTrackedEnt = iCounterEnt;
 		Config.bCounterReverse = IsCounterReverse(iCounterEnt);
 	}
 	else if (_Boss.IsHPBar)
@@ -307,11 +380,20 @@ bool BossInit(CBoss _Boss)
 		Boss.iIteratorEnt = iIteratorEnt;
 		Boss.iCounterEnt = iCounterEnt;
 		Boss.iBackupEnt = iBackupEnt;
+		iTrackedEnt = iIteratorEnt;
 
 		Config.bIteratorReverse = IsCounterReverse(iIteratorEnt);
 		Config.bCounterReverse = IsCounterReverse(iCounterEnt);
 	}
 
+	int iTrackedRef = BossEntityToRef(iTrackedEnt);
+	if (IsEntityTracked(iTrackedRef))
+	{
+		bDuplicate = true;
+		return false;
+	}
+
+	_Boss.iTrackedRef = iTrackedRef;
 	_Boss.bActive = true;
 
 	if (iTemplateNum != -1)

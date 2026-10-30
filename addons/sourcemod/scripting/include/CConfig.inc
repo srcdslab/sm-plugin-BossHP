@@ -37,6 +37,7 @@ methodmap CConfig < Basic
 		myclass.SetBool("bIgnore", false);
 		myclass.SetBool("bShowBeaten", false);
 		myclass.SetBool("bShowHealth", false);
+		myclass.SetBool("bInitErrorLogged", false);
 		myclass.SetFloat("fTimeout", -1.0);
 		myclass.SetInt("iOffset", 0);
 
@@ -241,6 +242,18 @@ methodmap CConfig < Basic
 		}
 	}
 
+	property bool bInitErrorLogged
+	{
+		public get()
+		{
+			return this.GetBool("bInitErrorLogged");
+		}
+		public set(bool value)
+		{
+			this.SetBool("bInitErrorLogged", value);
+		}
+	}
+
 	property float fTimeout
 	{
 		public get()
@@ -265,20 +278,26 @@ methodmap CConfig < Basic
 		}
 	}
 
-	property bool IsBreakable {
-		public get() {
+	property bool IsBreakable
+	{
+		public get()
+		{
 			return (this.iMethod == eConfigMethod_Breakable);
 		}
 	}
 
-	property bool IsCounter {
-		public get() {
+	property bool IsCounter
+	{
+		public get()
+		{
 			return (this.iMethod == eConfigMethod_Counter);
 		}
 	}
 
-	property bool IsHPBar {
-		public get() {
+	property bool IsHPBar
+	{
+		public get()
+		{
 			return (this.iMethod == eConfigMethod_HPBar);
 		}
 	}

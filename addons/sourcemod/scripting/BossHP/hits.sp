@@ -10,7 +10,7 @@ ConVar g_cvTopHitsMoney;
 ConVar g_cvTopHitsReward;
 ConVar g_cvDeathNotice;
 
-Handle g_hTopHitsSync = INVALID_HANDLE;
+Handle g_hTopHitsSync = null;
 
 int g_iTopHitsColor[3];
 float g_fTopHitsPosition[2];

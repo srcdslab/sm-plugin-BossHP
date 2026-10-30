@@ -61,7 +61,7 @@ ConVar g_cvEntityHealthMax;
 
 Cookie g_cShowHealth;
 
-Handle g_hHudSync = INVALID_HANDLE;
+Handle g_hHudSync = null;
 
 // Non-boss entities with health (CEntity)
 ArrayList g_aEntity = null;

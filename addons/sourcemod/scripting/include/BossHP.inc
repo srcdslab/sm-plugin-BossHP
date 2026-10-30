@@ -78,7 +78,7 @@ forward void BossHP_OnBossDamaged(CBoss boss, CConfig config, int activator, flo
  * @param boss       Optional param which refer to current boss.
  * @return           True if entity is boss or false otherwise.
  */
-native bool BossHP_IsBossEnt(int entity, CBoss &boss = view_as<CBoss>(INVALID_HANDLE));
+native bool BossHP_IsBossEnt(int entity, CBoss &boss = view_as<CBoss>(null));
 
 /**
  * Gets the current health of a boss
