@@ -37,6 +37,10 @@ jobs:
           cp -R deps/basic/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
           git clone --depth=1 https://github.com/srcdslab/sm-plugin-MultiColors.git deps/multicolors
           cp -R deps/multicolors/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
+          git clone --depth=1 https://github.com/srcdslab/sm-plugin-loghelper.git deps/loghelper
+          cp -R deps/loghelper/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
+          git clone --depth=1 https://github.com/srcdslab/sm-plugin-DynamicChannels.git deps/dynamicchannels
+          cp -R deps/dynamicchannels/scripting/include/* addons/sourcemod/scripting/include/
 
       - name: Build sourcemod plugin
         working-directory: addons/sourcemod/scripting

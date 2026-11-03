@@ -1,74 +1,275 @@
 "Phrases"
 {
-	"Chat Prefix"
+	"Top Boss"
 	{
-		"en"    "[BossHP]"
-		"fr"    "[BossHP]"
-		"ru"    "[BossHP]"
-		"es"    "[BossHP]"
-		"de"    "[BossHP]"
-		"pt"    "[BossHP]"
-		"chi"   "[BossHP]"
+		"en"		"Top boss"
+		"fr"		"Top boss"
+		"zho"		"最高Boss"
+		"chi"		"最高Boss"
+		"ru"		"Топ босс"
+		"es"		"Top jefe"
+		"de"		"Top-Boss"
+		"pt"		"Top chefe"
 	}
+
+	"Damage"
+	{
+		"en"		"damage"
+		"fr"		"dégâts"
+		"zho"		"傷害"
+		"chi"		"伤害"
+		"ru"		"урон"
+		"es"		"daño"
+		"de"		"Schaden"
+		"pt"		"dano"
+	}
+
+	"Hits"
+	{
+		"en"		"hits"
+		"fr"		"coups"
+		"zho"		"擊中次數"
+		"chi"		"击中次数"
+		"ru"		"попадания"
+		"es"		"impactos"
+		"de"		"Treffer"
+		"pt"		"acertos"
+	}
+
+	"Top Boss Title"
+	{
+		"en"		"TOP BOSS"
+		"fr"		"TOP BOSS"
+		"zho"		"最高BOSS"
+		"chi"		"最高BOSS"
+		"ru"		"ТОП БОСС"
+		"es"		"TOP JEFE"
+		"de"		"TOP-BOSS"
+		"pt"		"TOP CHEFE"
+	}
+
+	"Damage Title"
+	{
+		"en"		"DAMAGE"
+		"fr"		"DÉGÂTS"
+		"zho"		"傷害"
+		"chi"		"伤害"
+		"ru"		"УРОН"
+		"es"		"DAÑO"
+		"de"		"SCHADEN"
+		"pt"		"DANO"
+	}
+
+	"Hits Title"
+	{
+		"en"		"HITS"
+		"fr"		"COUPS"
+		"zho"		"擊中次數"
+		"chi"		"击中次数"
+		"ru"		"ПОПАДАНИЯ"
+		"es"		"IMPACTOS"
+		"de"		"TREFFER"
+		"pt"		"ACERTOS"
+	}
+
+	"Entity"
+	{
+		"en"		"Entity"
+		"fr"		"Entité"
+		"zho"		"實體"
+		"chi"		"实体"
+		"ru"		"Объект"
+		"es"		"Entidad"
+		"de"		"Entity"
+		"pt"		"Entidade"
+	}
+
+	"Usage"
+	{
+		"en"		"Usage"
+		"fr"		"Utilisation"
+		"zho"		"用法"
+		"chi"		"用法"
+		"ru"		"Использование"
+		"es"		"Uso"
+		"de"		"Verwendung"
+		"pt"		"Uso"
+	}
+
+	"Enabled"
+	{
+		"en"		"Enabled"
+		"fr"		"Activé"
+		"zho"		"開啓"
+		"chi"		"开启"
+		"ru"		"Включено"
+		"es"		"Activado"
+		"de"		"Aktiviert"
+		"pt"		"Ativado"
+	}
+
+	"Disabled"
+	{
+		"en"		"Disabled"
+		"fr"		"Désactivé"
+		"zho"		"停用"
+		"chi"		"停用"
+		"ru"		"Выключено"
+		"es"		"Desactivado"
+		"de"		"Deaktiviert"
+		"pt"		"Desativado"
+	}
+
+	"Display boss health"
+	{
+		"en"		"Display boss health"
+		"fr"		"Afficher la vie des boss"
+		"zho"		"顯示Boss的血量"
+		"chi"		"显示Boss的血量"
+		"ru"		"Показывать здоровье босса"
+		"es"		"Mostrar la vida de los jefes"
+		"de"		"Boss-HP anzeigen"
+		"pt"		"Mostrar a vida dos chefes"
+	}
+
+	"Show health has been"
+	{
+		"en"		"Boss health display:"
+		"fr"		"Affichage de la vie du boss :"
+		"zho"		"顯示Boss的血量"
+		"chi"		"显示Boss的血量"
+		"ru"		"Отображение здоровья босса:"
+		"es"		"Mostrar vida del jefe:"
+		"de"		"Boss-HP-Anzeige:"
+		"pt"		"Mostrar vida do chefe:"
+	}
+
+	"Invalid Entity"
+	{
+		"#format"	"{1:i}"
+
+		"en"		"Current entity is invalid (ID: {1})"
+		"fr"		"L'entité actuelle est invalide (ID : {1})"
+		"zho"		"目前實體是無效的（ID: {1}）"
+		"chi"		"目前实体是无效的（ID: {1}）"
+		"ru"		"Текущий объект недействителен (ID: {1})"
+		"es"		"La entidad actual no es válida (ID: {1})"
+		"de"		"Aktuelle Entity ist ungültig (ID: {1})"
+		"pt"		"A entidade atual é inválida (ID: {1})"
+	}
+
+	"Health subtracted"
+	{
+		"#format"	"{1:i},{2:i},{3:i}"
+
+		"en"		"{1} health subtracted ({2} HP to {3} HP)"
+		"fr"		"{1} points de vie soustraits ({2} HP à {3} HP)"
+		"zho"		"從Boss扣{1}血量（從{2}到{3}）"
+		"chi"		"从Boss扣{1}血量（从{2}到{3}）"
+		"ru"		"Вычтено {1} здоровья ({2} HP → {3} HP)"
+		"es"		"{1} de vida restada ({2} HP a {3} HP)"
+		"de"		"{1} HP abgezogen ({2} HP auf {3} HP)"
+		"pt"		"{1} de vida subtraída ({2} HP para {3} HP)"
+	}
+
+	"Health added"
+	{
+		"#format"	"{1:i},{2:i},{3:i}"
+
+		"en"		"{1} health added ({2} HP to {3} HP)"
+		"fr"		"{1} points de vie ajoutés ({2} HP à {3} HP)"
+		"zho"		"對Boss加{1}血量（從{2}到{3}）"
+		"chi"		"对Boss加{1}血量（从{2}到{3}）"
+		"ru"		"Добавлено {1} здоровья ({2} HP → {3} HP)"
+		"es"		"{1} de vida añadida ({2} HP a {3} HP)"
+		"de"		"{1} HP hinzugefügt ({2} HP auf {3} HP)"
+		"pt"		"{1} de vida adicionada ({2} HP para {3} HP)"
+	}
+
+	"Disconnected Player"
+	{
+		"#format"	"{1:d}"
+
+		"en"		"Disconnected (#{1})"
+		"fr"		"Déconnecté (#{1})"
+		"chi"		"已断开连接（#{1}）"
+		"zho"		"已斷開連線（#{1}）"
+		"ru"		"Отключился (#{1})"
+		"es"		"Desconectado (#{1})"
+		"de"		"Getrennt (#{1})"
+		"pt"		"Desconectado (#{1})"
+	}
+
 	"Map Supported"
 	{
-		"en"    "The current map is supported by this plugin."
-		"fr"    "La carte actuelle est prise en charge par ce plugin."
-		"ru"    "Текущая карта поддерживается этим плагином."
-		"es"    "El mapa actual es compatible con este plugin."
-		"de"    "Die aktuelle Map wird von diesem Plugin unterstützt."
-		"pt"    "O mapa atual é suportado por este plugin."
-		"chi"   "当前地图受此插件支持。"
+		"en"		"The current map is supported by this plugin."
+		"fr"		"La carte actuelle est prise en charge par ce plugin."
+		"ru"		"Текущая карта поддерживается этим плагином."
+		"es"		"El mapa actual es compatible con este plugin."
+		"de"		"Die aktuelle Map wird von diesem Plugin unterstützt."
+		"pt"		"O mapa atual é suportado por este plugin."
+		"chi"		"当前地图受此插件支持。"
+		"zho"		"目前地圖受此插件支援。"
 	}
+
 	"Config Not Loaded"
 	{
-		"en"    "Map config file is {red}not loaded."
-		"fr"    "Le fichier de configuration de la carte {red}n'est pas chargé."
-		"ru"    "Файл конфигурации карты {red}не загружен."
-		"es"    "El archivo de configuración del mapa {red}no está cargado."
-		"de"    "Die Map-Konfigurationsdatei ist {red}nicht geladen."
-		"pt"    "O arquivo de configuração do mapa {red}não está carregado."
-		"chi"   "地图配置文件{red}未加载。"
+		"en"		"Map config file is {red}not loaded."
+		"fr"		"Le fichier de configuration de la carte {red}n'est pas chargé."
+		"ru"		"Файл конфигурации карты {red}не загружен."
+		"es"		"El archivo de configuración del mapa {red}no está cargado."
+		"de"		"Die Map-Konfigurationsdatei ist {red}nicht geladen."
+		"pt"		"O arquivo de configuração do mapa {red}não está carregado."
+		"chi"		"地图配置文件{red}未加载。"
+		"zho"		"地圖設定檔{red}未載入。"
 	}
+
 	"Config Loaded"
 	{
-		"en"    "Map config file {green}is loaded."
-		"fr"    "Le fichier de configuration de la carte {green}est chargé."
-		"ru"    "Файл конфигурации карты {green}загружен."
-		"es"    "El archivo de configuración del mapa {green}está cargado."
-		"de"    "Die Map-Konfigurationsdatei ist {green}geladen."
-		"pt"    "O arquivo de configuração do mapa {green}está carregado."
-		"chi"   "地图配置文件{green}已加载。"
+		"en"		"Map config file {green}is loaded."
+		"fr"		"Le fichier de configuration de la carte {green}est chargé."
+		"ru"		"Файл конфигурации карты {green}загружен."
+		"es"		"El archivo de configuración del mapa {green}está cargado."
+		"de"		"Die Map-Konfigurationsdatei ist {green}geladen."
+		"pt"		"O arquivo de configuração do mapa {green}está carregado."
+		"chi"		"地图配置文件{green}已加载。"
+		"zho"		"地圖設定檔{green}已載入。"
 	}
+
 	"Config Loaded With Errors"
 	{
-		"en"    "Map config file is {green}loaded {fullred}but has errors."
-		"fr"    "Le fichier de configuration de la carte est {green}chargé {fullred}mais contient des erreurs."
-		"ru"    "Файл конфигурации карты {green}загружен{fullred}, но содержит ошибки."
-		"es"    "El archivo de configuración del mapa está {green}cargado {fullred}pero tiene errores."
-		"de"    "Die Map-Konfigurationsdatei ist {green}geladen{fullred}, enthält aber Fehler."
-		"pt"    "O arquivo de configuração do mapa está {green}carregado{fullred}, mas tem erros."
-		"chi"   "地图配置文件{green}已加载{fullred}，但有错误。"
+		"en"		"Map config file is {green}loaded {fullred}but has errors."
+		"fr"		"Le fichier de configuration de la carte est {green}chargé {fullred}mais contient des erreurs."
+		"ru"		"Файл конфигурации карты {green}загружен{fullred}, но содержит ошибки."
+		"es"		"El archivo de configuración del mapa está {green}cargado {fullred}pero tiene errores."
+		"de"		"Die Map-Konfigurationsdatei ist {green}geladen{fullred}, enthält aber Fehler."
+		"pt"		"O arquivo de configuração do mapa está {green}carregado{fullred}, mas tem erros."
+		"chi"		"地图配置文件{green}已加载{fullred}，但有错误。"
+		"zho"		"地圖設定檔{green}已載入{fullred}，但有錯誤。"
 	}
+
 	"Current Config"
 	{
-		"#format" "{1:s}"
-		"en"    "Current config: {olive}{1}"
-		"fr"    "Configuration actuelle : {olive}{1}"
-		"ru"    "Текущий конфиг: {olive}{1}"
-		"es"    "Configuración actual: {olive}{1}"
-		"de"    "Aktuelle Konfiguration: {olive}{1}"
-		"pt"    "Configuração atual: {olive}{1}"
-		"chi"   "当前配置：{olive}{1}"
+		"#format"	"{1:s}"
+		"en"		"Current config: {olive}{1}"
+		"fr"		"Configuration actuelle : {olive}{1}"
+		"ru"		"Текущий конфиг: {olive}{1}"
+		"es"		"Configuración actual: {olive}{1}"
+		"de"		"Aktuelle Konfiguration: {olive}{1}"
+		"pt"		"Configuração atual: {olive}{1}"
+		"chi"		"当前配置：{olive}{1}"
+		"zho"		"目前設定：{olive}{1}"
 	}
+
 	"Config Reloaded"
 	{
-		"en"    "Map config file has been reloaded."
-		"fr"    "Le fichier de configuration de la carte a été rechargé."
-		"ru"    "Файл конфигурации карты перезагружен."
-		"es"    "El archivo de configuración del mapa se ha recargado."
-		"de"    "Die Map-Konfigurationsdatei wurde neu geladen."
-		"pt"    "O arquivo de configuração do mapa foi recarregado."
-		"chi"   "地图配置文件已重新加载。"
+		"en"		"Map config file has been reloaded."
+		"fr"		"Le fichier de configuration de la carte a été rechargé."
+		"ru"		"Файл конфигурации карты перезагружен."
+		"es"		"El archivo de configuración del mapa se ha recargado."
+		"de"		"Die Map-Konfigurationsdatei wurde neu geladen."
+		"pt"		"O arquivo de configuração do mapa foi recarregado."
+		"chi"		"地图配置文件已重新加载。"
+		"zho"		"地圖設定檔已重新載入。"
 	}
 }
