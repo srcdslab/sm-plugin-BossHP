@@ -209,6 +209,7 @@
 		"de"		"Die aktuelle Map wird von diesem Plugin unterstützt."
 		"pt"		"O mapa atual é suportado por este plugin."
 		"chi"		"当前地图受此插件支持。"
+		"zho"		"目前地圖受此插件支援。"
 	}
 
 	"Config Not Loaded"
@@ -220,6 +221,7 @@
 		"de"		"Die Map-Konfigurationsdatei ist {red}nicht geladen."
 		"pt"		"O arquivo de configuração do mapa {red}não está carregado."
 		"chi"		"地图配置文件{red}未加载。"
+		"zho"		"地圖設定檔{red}未載入。"
 	}
 
 	"Config Loaded"
@@ -231,6 +233,7 @@
 		"de"		"Die Map-Konfigurationsdatei ist {green}geladen."
 		"pt"		"O arquivo de configuração do mapa {green}está carregado."
 		"chi"		"地图配置文件{green}已加载。"
+		"zho"		"地圖設定檔{green}已載入。"
 	}
 
 	"Config Loaded With Errors"
@@ -242,6 +245,7 @@
 		"de"		"Die Map-Konfigurationsdatei ist {green}geladen{fullred}, enthält aber Fehler."
 		"pt"		"O arquivo de configuração do mapa está {green}carregado{fullred}, mas tem erros."
 		"chi"		"地图配置文件{green}已加载{fullred}，但有错误。"
+		"zho"		"地圖設定檔{green}已載入{fullred}，但有錯誤。"
 	}
 
 	"Current Config"
@@ -254,6 +258,7 @@
 		"de"		"Aktuelle Konfiguration: {olive}{1}"
 		"pt"		"Configuração atual: {olive}{1}"
 		"chi"		"当前配置：{olive}{1}"
+		"zho"		"目前設定：{olive}{1}"
 	}
 
 	"Config Reloaded"
@@ -265,5 +270,6 @@
 		"de"		"Die Map-Konfigurationsdatei wurde neu geladen."
 		"pt"		"O arquivo de configuração do mapa foi recarregado."
 		"chi"		"地图配置文件已重新加载。"
+		"zho"		"地圖設定檔已重新載入。"
 	}
 }
