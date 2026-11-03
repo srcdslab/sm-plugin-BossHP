@@ -53,6 +53,8 @@ public void OnPluginStart()
 	HookEvent("round_end", OnRoundEnd, EventHookMode_PostNoCopy);
 	HookEntityOutput("env_entity_maker", "OnEntitySpawned", OnEnvEntityMakerEntitySpawned);
 
+	LoadTranslations("BossHP.phrases");
+
 	RegAdminCmd("sm_bosshp_reload", Command_ReloadConfig, ADMFLAG_CONFIG, "Reload the BossHP Map Config File.");
 	RegAdminCmd("sm_bosshp", Command_IsConfigLoaded, ADMFLAG_GENERIC, "Check if the BossHP Map Config File is loaded.");
 
@@ -85,7 +87,7 @@ public void OnMapEnd()
 public void OnRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
 	if (g_bConfigLoaded && g_cvVerboseLog.IntValue > 0)
-		CPrintToChatAll("{lightgreen}[BossHP]{default} The current map is supported by this plugin.");
+		CPrintToChatAll("{lightgreen}%t{default} %t", "Chat Prefix", "Map Supported");
 }
 
 public void OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
@@ -168,16 +170,16 @@ public void OnGameFrame()
 public Action Command_IsConfigLoaded(int client, int args)
 {
 	if (!g_bConfigLoaded)
-		CReplyToCommand(client, "{lightgreen}[BossHP]{default} Map config file is {red}not loaded.");
+		CReplyToCommand(client, "{lightgreen}%t{default} %t", "Chat Prefix", "Config Not Loaded");
 	else
 	{
 		if (!g_bConfigError)
-			CReplyToCommand(client, "{lightgreen}[BossHP]{default} Map config file {green}is loaded.");
+			CReplyToCommand(client, "{lightgreen}%t{default} %t", "Chat Prefix", "Config Loaded");
 		else
-			CReplyToCommand(client, "{lightgreen}[BossHP]{default} Map config file is {green}loaded {fullred}but has errors.");
+			CReplyToCommand(client, "{lightgreen}%t{default} %t", "Chat Prefix", "Config Loaded With Errors");
 
 		if (CheckCommandAccess(client, "sm_bosshp", ADMFLAG_ROOT))
-			CReplyToCommand(client, "{lightgreen}[BossHP]{default} Actual cfg: {olive}%s", g_sConfigLoaded);
+			CReplyToCommand(client, "{lightgreen}%t{default} %t", "Chat Prefix", "Current Config", g_sConfigLoaded);
 	}
 
 	return Plugin_Handled;
@@ -186,7 +188,7 @@ public Action Command_IsConfigLoaded(int client, int args)
 public Action Command_ReloadConfig(int client, int args)
 {
 	OnConfigsExecuted();
-	ReplyToCommand(client, "[BossHP] Map config file has been reloaded.");
+	CReplyToCommand(client, "{lightgreen}%t{default} %t", "Chat Prefix", "Config Reloaded");
 	return Plugin_Handled;
 }
 
