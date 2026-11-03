@@ -1,0 +1,74 @@
+"Phrases"
+{
+	"Chat Prefix"
+	{
+		"en"    "[BossHP]"
+		"fr"    "[BossHP]"
+		"ru"    "[BossHP]"
+		"es"    "[BossHP]"
+		"de"    "[BossHP]"
+		"pt"    "[BossHP]"
+		"chi"   "[BossHP]"
+	}
+	"Map Supported"
+	{
+		"en"    "The current map is supported by this plugin."
+		"fr"    "La carte actuelle est prise en charge par ce plugin."
+		"ru"    "Текущая карта поддерживается этим плагином."
+		"es"    "El mapa actual es compatible con este plugin."
+		"de"    "Die aktuelle Map wird von diesem Plugin unterstützt."
+		"pt"    "O mapa atual é suportado por este plugin."
+		"chi"   "当前地图受此插件支持。"
+	}
+	"Config Not Loaded"
+	{
+		"en"    "Map config file is {red}not loaded."
+		"fr"    "Le fichier de configuration de la carte {red}n'est pas chargé."
+		"ru"    "Файл конфигурации карты {red}не загружен."
+		"es"    "El archivo de configuración del mapa {red}no está cargado."
+		"de"    "Die Map-Konfigurationsdatei ist {red}nicht geladen."
+		"pt"    "O arquivo de configuração do mapa {red}não está carregado."
+		"chi"   "地图配置文件{red}未加载。"
+	}
+	"Config Loaded"
+	{
+		"en"    "Map config file {green}is loaded."
+		"fr"    "Le fichier de configuration de la carte {green}est chargé."
+		"ru"    "Файл конфигурации карты {green}загружен."
+		"es"    "El archivo de configuración del mapa {green}está cargado."
+		"de"    "Die Map-Konfigurationsdatei ist {green}geladen."
+		"pt"    "O arquivo de configuração do mapa {green}está carregado."
+		"chi"   "地图配置文件{green}已加载。"
+	}
+	"Config Loaded With Errors"
+	{
+		"en"    "Map config file is {green}loaded {fullred}but has errors."
+		"fr"    "Le fichier de configuration de la carte est {green}chargé {fullred}mais contient des erreurs."
+		"ru"    "Файл конфигурации карты {green}загружен{fullred}, но содержит ошибки."
+		"es"    "El archivo de configuración del mapa está {green}cargado {fullred}pero tiene errores."
+		"de"    "Die Map-Konfigurationsdatei ist {green}geladen{fullred}, enthält aber Fehler."
+		"pt"    "O arquivo de configuração do mapa está {green}carregado{fullred}, mas tem erros."
+		"chi"   "地图配置文件{green}已加载{fullred}，但有错误。"
+	}
+	"Current Config"
+	{
+		"#format" "{1:s}"
+		"en"    "Current config: {olive}{1}"
+		"fr"    "Configuration actuelle : {olive}{1}"
+		"ru"    "Текущий конфиг: {olive}{1}"
+		"es"    "Configuración actual: {olive}{1}"
+		"de"    "Aktuelle Konfiguration: {olive}{1}"
+		"pt"    "Configuração atual: {olive}{1}"
+		"chi"   "当前配置：{olive}{1}"
+	}
+	"Config Reloaded"
+	{
+		"en"    "Map config file has been reloaded."
+		"fr"    "Le fichier de configuration de la carte a été rechargé."
+		"ru"    "Файл конфигурации карты перезагружен."
+		"es"    "El archivo de configuración del mapa se ha recargado."
+		"de"    "Die Map-Konfigurationsdatei wurde neu geladen."
+		"pt"    "O arquivo de configuração do mapa foi recarregado."
+		"chi"   "地图配置文件已重新加载。"
+	}
+}
