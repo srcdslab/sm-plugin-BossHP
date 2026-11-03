@@ -297,11 +297,11 @@ void Hits_PrintTopHits(int client, CBoss Boss, const int iHits[MAXPLAYERS + 1], 
 	char sHeader[160];
 	if (g_cvTopHitsTitle.BoolValue)
 	{
-		char sUnitUpper[32];
-		strcopy(sUnitUpper, sizeof(sUnitUpper), sUnit);
-		StringToUpper(sTitle);
-		StringToUpper(sUnitUpper);
-		FormatEx(sHeader, sizeof(sHeader), "%s %s [%s]", sTitle, sUnitUpper, sBoss);
+		// Upper case comes from the phrases: SourcePawn cannot upper-case non-ASCII letters
+		char sTitleUpper[64], sUnitUpper[32];
+		FormatEx(sTitleUpper, sizeof(sTitleUpper), "%T", "Top Boss Title", client);
+		FormatEx(sUnitUpper, sizeof(sUnitUpper), "%T", Hits_CountsDamage(Boss) ? "Damage Title" : "Hits Title", client);
+		FormatEx(sHeader, sizeof(sHeader), "%s %s [%s]", sTitleUpper, sUnitUpper, sBoss);
 	}
 	else
 	{
@@ -321,7 +321,7 @@ void Hits_PrintTopHits(int client, CBoss Boss, const int iHits[MAXPLAYERS + 1], 
 
 		char sName[64];
 		if (!IsClientInGame(target) || !GetClientName(target, sName, sizeof(sName)))
-			FormatEx(sName, sizeof(sName), "Disconnected (#%d)", target);
+			FormatEx(sName, sizeof(sName), "%T", "Disconnected Player", client, target);
 
 		char sLine[128];
 		FormatEx(sLine, sizeof(sLine), "%d. %s: %d %s\n", i + 1, sName, iHits[target], sUnit);

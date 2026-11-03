@@ -11,16 +11,16 @@ void Config_OnPluginStart()
 public Action Command_IsConfigLoaded(int client, int args)
 {
 	if (!g_bConfigLoaded)
-		CReplyToCommand(client, CHAT_PREFIX ... "Map config file is {red}not loaded.");
+		CReplyToCommand(client, CHAT_PREFIX ... "%t", "Config Not Loaded");
 	else
 	{
 		if (!g_bConfigError)
-			CReplyToCommand(client, CHAT_PREFIX ... "Map config file {green}is loaded.");
+			CReplyToCommand(client, CHAT_PREFIX ... "%t", "Config Loaded");
 		else
-			CReplyToCommand(client, CHAT_PREFIX ... "Map config file is {green}loaded {fullred}but has errors.");
+			CReplyToCommand(client, CHAT_PREFIX ... "%t", "Config Loaded With Errors");
 
 		if (CheckCommandAccess(client, "sm_bosshp", ADMFLAG_ROOT))
-			CReplyToCommand(client, CHAT_PREFIX ... "Actual cfg: {olive}%s", g_sConfigLoaded);
+			CReplyToCommand(client, CHAT_PREFIX ... "%t", "Current Config", g_sConfigLoaded);
 	}
 
 	return Plugin_Handled;
@@ -29,7 +29,7 @@ public Action Command_IsConfigLoaded(int client, int args)
 public Action Command_ReloadConfig(int client, int args)
 {
 	Config_Load();
-	ReplyToCommand(client, CONSOLE_PREFIX ... "Map config file has been reloaded.");
+	ReplyToCommand(client, CONSOLE_PREFIX ... "%t", "Config Reloaded");
 	return Plugin_Handled;
 }
 

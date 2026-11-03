@@ -62,6 +62,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
+	LoadTranslations("common.phrases");
 	LoadTranslations("BossHP.phrases");
 
 	g_cvVerboseLog = CreateConVar("sm_bosshp_verbose", "0", "Verbosity level of logs (0 = error, 1 = info, 2 = debug)", _, true, 0.0, true, 2.0);
@@ -145,7 +146,7 @@ public void OnClientCookiesCached(int client)
 public void OnRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
 	if (g_bConfigLoaded && g_cvVerboseLog.IntValue > 0)
-		CPrintToChatAll(CHAT_PREFIX ... "The current map is supported by this plugin.");
+		CPrintToChatAll(CHAT_PREFIX ... "%t", "Map Supported");
 }
 
 public void OnRoundEnd(Event event, const char[] name, bool dontBroadcast)

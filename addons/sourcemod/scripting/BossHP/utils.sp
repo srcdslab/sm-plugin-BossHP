@@ -21,7 +21,7 @@ bool IsInGameCommand(int client)
 	if (client)
 		return true;
 
-	ReplyToCommand(client, CONSOLE_PREFIX ... "This command can only be used in-game.");
+	ReplyToCommand(client, CONSOLE_PREFIX ... "%t", "Command is in-game only");
 	return false;
 }
 
@@ -124,14 +124,4 @@ void StringToColor(const char[] sValue, int iColor[3])
 
 	for (int i = 0; i < 3; i++)
 		iColor[i] = StringToInt(sParts[i]);
-}
-
-// ASCII only, multi-byte characters are kept as is
-void StringToUpper(char[] sText)
-{
-	for (int i = 0; sText[i]; i++)
-	{
-		if ('a' <= sText[i] <= 'z')
-			sText[i] -= 'a' - 'A';
-	}
 }
