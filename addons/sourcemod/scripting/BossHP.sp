@@ -28,11 +28,12 @@ ArrayList g_aConfig = null;
 #define TRIGGER_ALL	(TRIGGER_MAIN | TRIGGER_SHOW | TRIGGER_KILL | TRIGGER_HURT)
 #define TRIGGER_KINDS	4
 
-// Config indexes by trigger, one map per trigger kind: "h<Hammer ID>" or "n<lowercase targetname>"
-// -> indexes of the configs with that trigger, in config order. Built with g_aConfig: the trigger
-// handlers run for every spawned entity and on every hit on a boss, and reading every config there
-// (StringMap reads and string compares) added up.
-StringMap g_smTriggerIndex[TRIGGER_KINDS];
+// Config indexes by trigger: one map per trigger kind, plus one for all kinds together (slot
+// TRIGGER_KINDS, for ProcessEntitySpawned). Key "h<Hammer ID>" or "n<lowercase targetname>" -> indexes
+// of the configs with that trigger, in config order. Built with g_aConfig: the trigger handlers run
+// for every spawned entity and on every hit on a boss, and reading every config there (StringMap
+// reads and string compares) added up.
+StringMap g_smTriggerIndex[TRIGGER_KINDS + 1];
 ArrayList g_aBoss = null;
 StringMap g_aHadOnce = null;
 
@@ -225,8 +226,8 @@ void Cleanup(bool bCleanConfig = true)
 		}
 		delete g_aConfig;
 
-		for (int kind = 0; kind < TRIGGER_KINDS; kind++)
-			delete g_smTriggerIndex[kind];
+		for (int slot = 0; slot <= TRIGGER_KINDS; slot++)
+			delete g_smTriggerIndex[slot];
 	}
 
 	if (g_aBoss)
@@ -603,10 +604,10 @@ void BuildTriggerIndex()
 {
 	int iConfigs = g_aConfig.Length;
 
-	for (int kind = 0; kind < TRIGGER_KINDS; kind++)
+	for (int slot = 0; slot <= TRIGGER_KINDS; slot++)
 	{
-		delete g_smTriggerIndex[kind];
-		g_smTriggerIndex[kind] = new StringMap();
+		delete g_smTriggerIndex[slot];
+		g_smTriggerIndex[slot] = new StringMap();
 	}
 
 	// Same 64 cell buffers as the trigger handlers
@@ -637,6 +638,7 @@ void BuildTriggerIndex()
 				int iHammerID = StringToInt(sTrigger[1]);
 				FormatEx(sKey, sizeof(sKey), "h%d", iHammerID);
 				AddTriggerIndex(kind, sKey, i, iConfigs);
+				AddTriggerIndex(TRIGGER_KINDS, sKey, i, iConfigs);
 
 				// "#-1" is no Hammer ID: ProcessEntitySpawned compares it as a targetname
 				if (iHammerID != -1)
@@ -645,18 +647,23 @@ void BuildTriggerIndex()
 
 			TriggerNameKey(sTrigger, sKey, sizeof(sKey));
 			AddTriggerIndex(kind, sKey, i, iConfigs);
+			AddTriggerIndex(TRIGGER_KINDS, sKey, i, iConfigs);
 		}
 	}
 }
 
-void AddTriggerIndex(int kind, const char[] sKey, int iConfig, int iConfigs)
+void AddTriggerIndex(int slot, const char[] sKey, int iConfig, int iConfigs)
 {
 	int[] iList = new int[iConfigs];
 	int iSize = 0;
-	g_smTriggerIndex[kind].GetArray(sKey, iList, iConfigs, iSize);
+	g_smTriggerIndex[slot].GetArray(sKey, iList, iConfigs, iSize);
+
+	// Configs come in order: a config with two triggers on the same key is already the last one
+	if (iSize > 0 && iList[iSize - 1] == iConfig)
+		return;
 
 	iList[iSize++] = iConfig;
-	g_smTriggerIndex[kind].SetArray(sKey, iList, iSize);
+	g_smTriggerIndex[slot].SetArray(sKey, iList, iSize);
 }
 
 // "n" followed by the targetname in lowercase (the handlers compare targetnames ignoring case)
@@ -664,9 +671,13 @@ void TriggerNameKey(const char[] sName, char[] sKey, int iKeySize)
 {
 	sKey[0] = 'n';
 
+	// ASCII lowercase like strcmp(..., false), with plain arithmetic: CharToLower() calls a native per character
 	int i;
 	for (i = 0; sName[i] != '\0' && i + 1 < iKeySize - 1; i++)
-		sKey[i + 1] = CharToLower(sName[i]);
+	{
+		int c = sName[i];
+		sKey[i + 1] = ('A' <= c <= 'Z') ? c + ('a' - 'A') : c;
+	}
 
 	sKey[i + 1] = '\0';
 }
@@ -690,20 +701,22 @@ int GetTriggerCandidates(int kinds, const char[] sTargetname, int iHammerID, int
 	if (sTargetname[0])
 		TriggerNameKey(sTargetname, sNameKey, sizeof(sNameKey));
 
-	for (int kind = 0; kind < TRIGGER_KINDS; kind++)
+	for (int slot = 0; slot <= TRIGGER_KINDS; slot++)
 	{
-		if (!(kinds & (1 << kind)) || !g_smTriggerIndex[kind])
+		// All kinds at once: one lookup per key in the combined map
+		bool bUse = (kinds == TRIGGER_ALL) ? (slot == TRIGGER_KINDS) : (slot < TRIGGER_KINDS && (kinds & (1 << slot)) != 0);
+		if (!bUse || !g_smTriggerIndex[slot])
 			continue;
 
 		int iSize;
-		if (g_smTriggerIndex[kind].GetArray(sHammerKey, iList, iConfigs, iSize))
+		if (g_smTriggerIndex[slot].GetArray(sHammerKey, iList, iConfigs, iSize))
 		{
 			for (int j = 0; j < iSize; j++)
 				bCandidate[iList[j]] = true;
 			bAny = true;
 		}
 
-		if (sNameKey[0] && g_smTriggerIndex[kind].GetArray(sNameKey, iList, iConfigs, iSize))
+		if (sNameKey[0] && g_smTriggerIndex[slot].GetArray(sNameKey, iList, iConfigs, iSize))
 		{
 			for (int j = 0; j < iSize; j++)
 				bCandidate[iList[j]] = true;
