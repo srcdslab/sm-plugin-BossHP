@@ -19,6 +19,20 @@ GlobalForward g_hForward_OnAllBossProcessStart = null;
 GlobalForward g_hForward_OnAllBossProcessEnd = null;
 
 ArrayList g_aConfig = null;
+
+// Trigger kinds of a config, as bits for GetTriggerCandidates()
+#define TRIGGER_MAIN	(1 << 0)
+#define TRIGGER_SHOW	(1 << 1)
+#define TRIGGER_KILL	(1 << 2)
+#define TRIGGER_HURT	(1 << 3)
+#define TRIGGER_ALL	(TRIGGER_MAIN | TRIGGER_SHOW | TRIGGER_KILL | TRIGGER_HURT)
+#define TRIGGER_KINDS	4
+
+// Config indexes by trigger, one map per trigger kind: "h<Hammer ID>" or "n<lowercase targetname>"
+// -> indexes of the configs with that trigger, in config order. Built with g_aConfig: the trigger
+// handlers run for every spawned entity and on every hit on a boss, and reading every config there
+// (StringMap reads and string compares) added up.
+StringMap g_smTriggerIndex[TRIGGER_KINDS];
 ArrayList g_aBoss = null;
 StringMap g_aHadOnce = null;
 
@@ -210,6 +224,9 @@ void Cleanup(bool bCleanConfig = true)
 			delete Config;
 		}
 		delete g_aConfig;
+
+		for (int kind = 0; kind < TRIGGER_KINDS; kind++)
+			delete g_smTriggerIndex[kind];
 	}
 
 	if (g_aBoss)
@@ -573,10 +590,138 @@ stock void LoadConfig()
 		return;
 	}
 
+	BuildTriggerIndex();
+
 	Cleanup(false);
 
 	g_aBoss = new ArrayList();
 	g_aHadOnce = new StringMap();
+}
+
+// Fills g_smTriggerIndex from g_aConfig
+void BuildTriggerIndex()
+{
+	int iConfigs = g_aConfig.Length;
+
+	for (int kind = 0; kind < TRIGGER_KINDS; kind++)
+	{
+		delete g_smTriggerIndex[kind];
+		g_smTriggerIndex[kind] = new StringMap();
+	}
+
+	// Same 64 cell buffers as the trigger handlers
+	char sTrigger[64], sKey[72];
+
+	for (int i = 0; i < iConfigs; i++)
+	{
+		CConfig Config = g_aConfig.Get(i);
+
+		for (int kind = 0; kind < TRIGGER_KINDS; kind++)
+		{
+			// A getter leaves the buffer as it was when the key is missing
+			sTrigger[0] = '\0';
+
+			switch (1 << kind)
+			{
+				case TRIGGER_MAIN: Config.GetTrigger(sTrigger, sizeof(sTrigger));
+				case TRIGGER_SHOW: Config.GetShowTrigger(sTrigger, sizeof(sTrigger));
+				case TRIGGER_KILL: Config.GetKillTrigger(sTrigger, sizeof(sTrigger));
+				case TRIGGER_HURT: Config.GetHurtTrigger(sTrigger, sizeof(sTrigger));
+			}
+
+			if (!sTrigger[0])
+				continue;
+
+			if (sTrigger[0] == '#')
+			{
+				int iHammerID = StringToInt(sTrigger[1]);
+				FormatEx(sKey, sizeof(sKey), "h%d", iHammerID);
+				AddTriggerIndex(kind, sKey, i, iConfigs);
+
+				// "#-1" is no Hammer ID: ProcessEntitySpawned compares it as a targetname
+				if (iHammerID != -1)
+					continue;
+			}
+
+			TriggerNameKey(sTrigger, sKey, sizeof(sKey));
+			AddTriggerIndex(kind, sKey, i, iConfigs);
+		}
+	}
+}
+
+void AddTriggerIndex(int kind, const char[] sKey, int iConfig, int iConfigs)
+{
+	int[] iList = new int[iConfigs];
+	int iSize = 0;
+	g_smTriggerIndex[kind].GetArray(sKey, iList, iConfigs, iSize);
+
+	iList[iSize++] = iConfig;
+	g_smTriggerIndex[kind].SetArray(sKey, iList, iSize);
+}
+
+// "n" followed by the targetname in lowercase (the handlers compare targetnames ignoring case)
+void TriggerNameKey(const char[] sName, char[] sKey, int iKeySize)
+{
+	sKey[0] = 'n';
+
+	int i;
+	for (i = 0; sName[i] != '\0' && i + 1 < iKeySize - 1; i++)
+		sKey[i + 1] = CharToLower(sName[i]);
+
+	sKey[i + 1] = '\0';
+}
+
+// Fills iCandidates with the indexes of the configs that have a trigger of one of these kinds
+// with this Hammer ID or this targetname, in config order, and returns how many.
+// It only narrows the configs down: the handlers still run all their checks on each of them.
+int GetTriggerCandidates(int kinds, const char[] sTargetname, int iHammerID, int[] iCandidates)
+{
+	if (!g_aConfig)
+		return 0;
+
+	int iConfigs = g_aConfig.Length;
+	bool[] bCandidate = new bool[iConfigs];
+	int[] iList = new int[iConfigs];
+	bool bAny = false;
+
+	char sHammerKey[16], sNameKey[72];
+	FormatEx(sHammerKey, sizeof(sHammerKey), "h%d", iHammerID);
+	sNameKey[0] = '\0';
+	if (sTargetname[0])
+		TriggerNameKey(sTargetname, sNameKey, sizeof(sNameKey));
+
+	for (int kind = 0; kind < TRIGGER_KINDS; kind++)
+	{
+		if (!(kinds & (1 << kind)) || !g_smTriggerIndex[kind])
+			continue;
+
+		int iSize;
+		if (g_smTriggerIndex[kind].GetArray(sHammerKey, iList, iConfigs, iSize))
+		{
+			for (int j = 0; j < iSize; j++)
+				bCandidate[iList[j]] = true;
+			bAny = true;
+		}
+
+		if (sNameKey[0] && g_smTriggerIndex[kind].GetArray(sNameKey, iList, iConfigs, iSize))
+		{
+			for (int j = 0; j < iSize; j++)
+				bCandidate[iList[j]] = true;
+			bAny = true;
+		}
+	}
+
+	int iCount = 0;
+	if (bAny)
+	{
+		for (int i = 0; i < iConfigs; i++)
+		{
+			if (bCandidate[i])
+				iCandidates[iCount++] = i;
+		}
+	}
+
+	return iCount;
 }
 
 void ProcessRoundEnd()
@@ -602,8 +747,13 @@ void OnTrigger(int entity, const char[] output, SDKHookType HookType = view_as<S
 	if (g_cvVerboseLog.IntValue > 1)
 		LogMessage("OnTrigger(%d:\"%s\":#%d, \"%s\")", entity, sTargetname, iHammerID, output);
 
-	for (int i = 0; i < g_aConfig.Length; i++)
+	int iConfigs = g_aConfig.Length;
+	int[] iCandidates = new int[iConfigs];
+	int iCandidateCount = GetTriggerCandidates(TRIGGER_MAIN, sTargetname, iHammerID, iCandidates);
+
+	for (int c = 0; c < iCandidateCount; c++)
 	{
+		int i = iCandidates[c];
 		CConfig Config = g_aConfig.Get(i);
 
 		char sTrigger[64];
@@ -698,8 +848,13 @@ void OnShowTrigger(int entity, const char[] output, SDKHookType HookType = view_
 		sTargetname[iTemplateLoc] = 0;
 	}
 
-	for (int i = 0; i < g_aConfig.Length; i++)
+	int iConfigs = g_aConfig.Length;
+	int[] iCandidates = new int[iConfigs];
+	int iCandidateCount = GetTriggerCandidates(TRIGGER_SHOW, sTargetname, iHammerID, iCandidates);
+
+	for (int c = 0; c < iCandidateCount; c++)
 	{
+		int i = iCandidates[c];
 		CConfig Config = g_aConfig.Get(i);
 
 		char sShowTrigger[64];
@@ -782,8 +937,13 @@ void OnKillTrigger(int entity, const char[] output, SDKHookType HookType = view_
 		sTargetname[iTemplateLoc] = 0;
 	}
 
-	for (int i = 0; i < g_aConfig.Length; i++)
+	int iConfigs = g_aConfig.Length;
+	int[] iCandidates = new int[iConfigs];
+	int iCandidateCount = GetTriggerCandidates(TRIGGER_KILL, sTargetname, iHammerID, iCandidates);
+
+	for (int c = 0; c < iCandidateCount; c++)
 	{
+		int i = iCandidates[c];
 		CConfig Config = g_aConfig.Get(i);
 
 		char sKillTrigger[64];
@@ -872,8 +1032,13 @@ void OnHurtTrigger(int entity, const char[] output, int activator, float damage 
 		sTargetname[iTemplateLoc] = 0;
 	}
 
-	for (int i = 0; i < g_aConfig.Length; i++)
+	int iConfigs = g_aConfig.Length;
+	int[] iCandidates = new int[iConfigs];
+	int iCandidateCount = GetTriggerCandidates(TRIGGER_HURT, sTargetname, iHammerID, iCandidates);
+
+	for (int c = 0; c < iCandidateCount; c++)
 	{
+		int i = iCandidates[c];
 		CConfig Config = g_aConfig.Get(i);
 
 		char sHurtTrigger[64];
@@ -955,8 +1120,13 @@ void ProcessEntitySpawned(int entity)
 
 	int iHammerID = GetEntProp(entity, Prop_Data, "m_iHammerID");
 
-	for (int i = 0; i < g_aConfig.Length; i++)
+	int iConfigs = g_aConfig.Length;
+	int[] iCandidates = new int[iConfigs];
+	int iCandidateCount = GetTriggerCandidates(TRIGGER_ALL, sTargetname, iHammerID, iCandidates);
+
+	for (int c = 0; c < iCandidateCount; c++)
 	{
+		int i = iCandidates[c];
 		CConfig Config = g_aConfig.Get(i);
 
 		char sTrigger[64];
