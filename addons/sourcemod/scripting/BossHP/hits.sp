@@ -199,6 +199,9 @@ void Hits_OnBossEntityDamaged(CBoss Boss, int client)
 
 		// Always follow the health, even for ignored damage or healing, so the next hit only counts its own damage
 		int iHealth = GetEntProp(iBreakableEnt, Prop_Data, "m_iHealth");
+		// The hit that breaks it takes the health below 0: only the health it had left counts
+		if (iHealth < 0)
+			iHealth = 0;
 		iAmount = Boss.GetInt("iHitsHealth", iHealth) - iHealth;
 		Boss.SetInt("iHitsHealth", iHealth);
 
