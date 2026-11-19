@@ -10,6 +10,11 @@
 		"es"		"Top jefe"
 		"de"		"Top-Boss"
 		"pt"		"Top chefe"
+		"pl"		"Najlepszy boss"
+		"tr"		"En iyi boss"
+		"it"		"Top boss"
+		"ua"		"Топ бос"
+		"cze"		"Top boss"
 	}
 
 	"Damage"
@@ -22,6 +27,11 @@
 		"es"		"daño"
 		"de"		"Schaden"
 		"pt"		"dano"
+		"pl"		"obrażenia"
+		"tr"		"hasar"
+		"it"		"danni"
+		"ua"		"шкода"
+		"cze"		"poškození"
 	}
 
 	"Hits"
@@ -34,6 +44,11 @@
 		"es"		"impactos"
 		"de"		"Treffer"
 		"pt"		"acertos"
+		"pl"		"trafienia"
+		"tr"		"vuruş"
+		"it"		"colpi"
+		"ua"		"влучання"
+		"cze"		"zásahy"
 	}
 
 	"Top Boss Title"
@@ -46,6 +61,11 @@
 		"es"		"TOP JEFE"
 		"de"		"TOP-BOSS"
 		"pt"		"TOP CHEFE"
+		"pl"		"NAJLEPSZY BOSS"
+		"tr"		"EN İYİ BOSS"
+		"it"		"TOP BOSS"
+		"ua"		"ТОП БОС"
+		"cze"		"TOP BOSS"
 	}
 
 	"Damage Title"
@@ -58,6 +78,11 @@
 		"es"		"DAÑO"
 		"de"		"SCHADEN"
 		"pt"		"DANO"
+		"pl"		"OBRAŻENIA"
+		"tr"		"HASAR"
+		"it"		"DANNI"
+		"ua"		"ШКОДА"
+		"cze"		"POŠKOZENÍ"
 	}
 
 	"Hits Title"
@@ -70,6 +95,11 @@
 		"es"		"IMPACTOS"
 		"de"		"TREFFER"
 		"pt"		"ACERTOS"
+		"pl"		"TRAFIENIA"
+		"tr"		"VURUŞ"
+		"it"		"COLPI"
+		"ua"		"ВЛУЧАННЯ"
+		"cze"		"ZÁSAHY"
 	}
 
 	"Entity"
@@ -82,6 +112,11 @@
 		"es"		"Entidad"
 		"de"		"Entity"
 		"pt"		"Entidade"
+		"pl"		"Encja"
+		"tr"		"Varlık"
+		"it"		"Entità"
+		"ua"		"Сутність"
+		"cze"		"Entita"
 	}
 
 	"Usage"
@@ -94,6 +129,11 @@
 		"es"		"Uso"
 		"de"		"Verwendung"
 		"pt"		"Uso"
+		"pl"		"Użycie"
+		"tr"		"Kullanım"
+		"it"		"Uso"
+		"ua"		"Використання"
+		"cze"		"Použití"
 	}
 
 	"Enabled"
@@ -106,6 +146,11 @@
 		"es"		"Activado"
 		"de"		"Aktiviert"
 		"pt"		"Ativado"
+		"pl"		"Włączone"
+		"tr"		"Etkin"
+		"it"		"Attivato"
+		"ua"		"Увімкнено"
+		"cze"		"Zapnuto"
 	}
 
 	"Disabled"
@@ -118,6 +163,11 @@
 		"es"		"Desactivado"
 		"de"		"Deaktiviert"
 		"pt"		"Desativado"
+		"pl"		"Wyłączone"
+		"tr"		"Devre dışı"
+		"it"		"Disattivato"
+		"ua"		"Вимкнено"
+		"cze"		"Vypnuto"
 	}
 
 	"Display boss health"
@@ -130,6 +180,11 @@
 		"es"		"Mostrar la vida de los jefes"
 		"de"		"Boss-HP anzeigen"
 		"pt"		"Mostrar a vida dos chefes"
+		"pl"		"Wyświetlaj zdrowie bossa"
+		"tr"		"Boss canını göster"
+		"it"		"Mostra la salute del boss"
+		"ua"		"Показувати здоров'я боса"
+		"cze"		"Zobrazit zdraví bosse"
 	}
 
 	"Show health has been"
@@ -142,6 +197,11 @@
 		"es"		"Mostrar vida del jefe:"
 		"de"		"Boss-HP-Anzeige:"
 		"pt"		"Mostrar vida do chefe:"
+		"pl"		"Wyświetlanie zdrowia bossa:"
+		"tr"		"Boss canı gösterimi:"
+		"it"		"Visualizzazione salute del boss:"
+		"ua"		"Показ здоров'я боса:"
+		"cze"		"Zobrazení zdraví bosse:"
 	}
 
 	"Invalid Entity"
@@ -156,6 +216,11 @@
 		"es"		"La entidad actual no es válida (ID: {1})"
 		"de"		"Aktuelle Entity ist ungültig (ID: {1})"
 		"pt"		"A entidade atual é inválida (ID: {1})"
+		"pl"		"Obecna encja jest nieprawidłowa (ID: {1})"
+		"tr"		"Mevcut varlık geçersiz (ID: {1})"
+		"it"		"L'entità attuale non è valida (ID: {1})"
+		"ua"		"Поточна сутність недійсна (ID: {1})"
+		"cze"		"Aktuální entita je neplatná (ID: {1})"
 	}
 
 	"Health subtracted"
@@ -170,6 +235,11 @@
 		"es"		"{1} de vida restada ({2} HP a {3} HP)"
 		"de"		"{1} HP abgezogen ({2} HP auf {3} HP)"
 		"pt"		"{1} de vida subtraída ({2} HP para {3} HP)"
+		"pl"		"Odjęto {1} zdrowia ({2} HP do {3} HP)"
+		"tr"		"{1} can düşüldü ({2} HP'den {3} HP'ye)"
+		"it"		"{1} salute sottratta ({2} HP a {3} HP)"
+		"ua"		"Віднято {1} здоров'я ({2} HP до {3} HP)"
+		"cze"		"Odečteno {1} zdraví ({2} HP na {3} HP)"
 	}
 
 	"Health added"
@@ -184,6 +254,11 @@
 		"es"		"{1} de vida añadida ({2} HP a {3} HP)"
 		"de"		"{1} HP hinzugefügt ({2} HP auf {3} HP)"
 		"pt"		"{1} de vida adicionada ({2} HP para {3} HP)"
+		"pl"		"Dodano {1} zdrowia ({2} HP do {3} HP)"
+		"tr"		"{1} can eklendi ({2} HP'den {3} HP'ye)"
+		"it"		"{1} salute aggiunta ({2} HP a {3} HP)"
+		"ua"		"Додано {1} здоров'я ({2} HP до {3} HP)"
+		"cze"		"Přidáno {1} zdraví ({2} HP na {3} HP)"
 	}
 
 	"Disconnected Player"
@@ -198,6 +273,11 @@
 		"es"		"Desconectado (#{1})"
 		"de"		"Getrennt (#{1})"
 		"pt"		"Desconectado (#{1})"
+		"pl"		"Rozłączony (#{1})"
+		"tr"		"Bağlantısı kesildi (#{1})"
+		"it"		"Disconnesso (#{1})"
+		"ua"		"Відключений (#{1})"
+		"cze"		"Odpojen (#{1})"
 	}
 
 	"Map Supported"
@@ -209,7 +289,12 @@
 		"de"		"Die aktuelle Map wird von diesem Plugin unterstützt."
 		"pt"		"O mapa atual é suportado por este plugin."
 		"chi"		"当前地图受此插件支持。"
-		"zho"		"目前地圖受此插件支援。"
+		"zho"		"目前的地圖受此外掛支援。"
+		"pl"		"Aktualna mapa jest obsługiwana przez ten plugin."
+		"tr"		"Mevcut harita bu eklenti tarafından destekleniyor."
+		"it"		"La mappa attuale è supportata da questo plugin."
+		"ua"		"Поточна карта підтримується цим плагіном."
+		"cze"		"Aktuální mapa je tímto pluginem podporována."
 	}
 
 	"Config Not Loaded"
@@ -222,6 +307,11 @@
 		"pt"		"O arquivo de configuração do mapa {red}não está carregado."
 		"chi"		"地图配置文件{red}未加载。"
 		"zho"		"地圖設定檔{red}未載入。"
+		"pl"		"Plik konfiguracji mapy {red}nie został załadowany."
+		"tr"		"Harita yapılandırma dosyası {red}yüklenmedi."
+		"it"		"Il file di configurazione della mappa {red}non è caricato."
+		"ua"		"Файл конфігурації карти {red}не завантажено."
+		"cze"		"Konfigurační soubor mapy {red}není načten."
 	}
 
 	"Config Loaded"
@@ -234,6 +324,11 @@
 		"pt"		"O arquivo de configuração do mapa {green}está carregado."
 		"chi"		"地图配置文件{green}已加载。"
 		"zho"		"地圖設定檔{green}已載入。"
+		"pl"		"Plik konfiguracji mapy {green}został załadowany."
+		"tr"		"Harita yapılandırma dosyası {green}yüklendi."
+		"it"		"Il file di configurazione della mappa {green}è caricato."
+		"ua"		"Файл конфігурації карти {green}завантажено."
+		"cze"		"Konfigurační soubor mapy {green}je načten."
 	}
 
 	"Config Loaded With Errors"
@@ -246,6 +341,11 @@
 		"pt"		"O arquivo de configuração do mapa está {green}carregado{fullred}, mas tem erros."
 		"chi"		"地图配置文件{green}已加载{fullred}，但有错误。"
 		"zho"		"地圖設定檔{green}已載入{fullred}，但有錯誤。"
+		"pl"		"Plik konfiguracji mapy został {green}załadowany{fullred}, ale zawiera błędy."
+		"tr"		"Harita yapılandırma dosyası {green}yüklendi{fullred}, ancak hatalar içeriyor."
+		"it"		"Il file di configurazione della mappa è {green}caricato{fullred}, ma contiene errori."
+		"ua"		"Файл конфігурації карти {green}завантажено{fullred}, але він містить помилки."
+		"cze"		"Konfigurační soubor mapy je {green}načten{fullred}, ale obsahuje chyby."
 	}
 
 	"Current Config"
@@ -259,6 +359,11 @@
 		"pt"		"Configuração atual: {olive}{1}"
 		"chi"		"当前配置：{olive}{1}"
 		"zho"		"目前設定：{olive}{1}"
+		"pl"		"Aktualna konfiguracja: {olive}{1}"
+		"tr"		"Mevcut yapılandırma: {olive}{1}"
+		"it"		"Configurazione attuale: {olive}{1}"
+		"ua"		"Поточна конфігурація: {olive}{1}"
+		"cze"		"Aktuální konfigurace: {olive}{1}"
 	}
 
 	"Config Reloaded"
@@ -271,5 +376,10 @@
 		"pt"		"O arquivo de configuração do mapa foi recarregado."
 		"chi"		"地图配置文件已重新加载。"
 		"zho"		"地圖設定檔已重新載入。"
+		"pl"		"Plik konfiguracji mapy został przeładowany."
+		"tr"		"Harita yapılandırma dosyası yeniden yüklendi."
+		"it"		"Il file di configurazione della mappa è stato ricaricato."
+		"ua"		"Файл конфігурації карти перезавантажено."
+		"cze"		"Konfigurační soubor mapy byl znovu načten."
 	}
 }
