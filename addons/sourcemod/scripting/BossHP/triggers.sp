@@ -99,8 +99,44 @@ void UnhookTriggerDamage(int entity, BossTrigger iType)
 	}
 }
 
+// Removes every hook HookTrigger added for this trigger on the entity
+void UnhookTrigger(int entity, BossTrigger iType, const char[] sOutput)
+{
+	if (strcmp(sOutput, "OnTakeDamage", false) == 0)
+	{
+		UnhookTriggerDamage(entity, iType);
+		return;
+	}
+
+	// One hook is removed per call, an entity may be hooked once per config
+	switch (iType)
+	{
+		case BossTrigger_Spawn: while (UnhookSingleEntityOutput(entity, sOutput, OnEntityOutputSpawn)) {}
+		case BossTrigger_Show: while (UnhookSingleEntityOutput(entity, sOutput, OnEntityOutputShow)) {}
+		case BossTrigger_Kill: while (UnhookSingleEntityOutput(entity, sOutput, OnEntityOutputKill)) {}
+		case BossTrigger_Hurt: while (UnhookSingleEntityOutput(entity, sOutput, OnEntityOutputHurt)) {}
+	}
+}
+
 // Hooks the triggers of every config that targets this entity
 void Triggers_OnEntitySpawned(int entity)
+{
+	Triggers_HookEntity(entity, false);
+}
+
+// Hooks the triggers of the entities that already exist. On a late load or a config reload they
+// spawned before the config was loaded, and the single-use triggers that already fired are no
+// longer hooked: they are armed again.
+void Triggers_HookExisting()
+{
+	int entity = INVALID_ENT_REFERENCE;
+	while ((entity = FindEntityByClassname(entity, "*")) != INVALID_ENT_REFERENCE)
+		Triggers_HookEntity(entity, true);
+}
+
+// bRehook removes the hooks already on the entity first, so no trigger is hooked twice. It is a
+// separate pass: two configs may share a trigger, each with its own hook.
+void Triggers_HookEntity(int entity, bool bRehook)
 {
 	if (!g_aConfig || !IsValidEntity(entity))
 		return;
@@ -113,24 +149,33 @@ void Triggers_OnEntitySpawned(int entity)
 
 	int iHammerID = GetEntProp(entity, Prop_Data, "m_iHammerID");
 
-	for (int i = 0; i < g_aConfig.Length; i++)
+	for (int iPass = bRehook ? 0 : 1; iPass < 2; iPass++)
 	{
-		CConfig Config = g_aConfig.Get(i);
-
-		for (BossTrigger iType = BossTrigger_Spawn; iType < BossTrigger_Count; iType++)
+		for (int i = 0; i < g_aConfig.Length; i++)
 		{
-			char sTrigger[64], sOutput[64];
-			if (!GetConfigTrigger(Config, iType, sTrigger, sizeof(sTrigger), sOutput, sizeof(sOutput)))
-				continue;
+			CConfig Config = g_aConfig.Get(i);
 
-			if (!MatchTrigger(sTrigger, sTargetname, iHammerID))
-				continue;
+			for (BossTrigger iType = BossTrigger_Spawn; iType < BossTrigger_Count; iType++)
+			{
+				char sTrigger[64], sOutput[64];
+				if (!GetConfigTrigger(Config, iType, sTrigger, sizeof(sTrigger), sOutput, sizeof(sOutput)))
+					continue;
 
-			// A hurttrigger reports every hit
-			HookTrigger(entity, iType, sOutput, iType != BossTrigger_Hurt && !Config.bMultiTrigger);
+				if (!MatchTrigger(sTrigger, sTargetname, iHammerID))
+					continue;
 
-			if (g_cvVerboseLog.IntValue > 0)
-				LogMessage("Hooked %s %s:%s", g_sTriggerKeys[iType], sTrigger, sOutput);
+				if (iPass == 0)
+				{
+					UnhookTrigger(entity, iType, sOutput);
+					continue;
+				}
+
+				// A hurttrigger reports every hit
+				HookTrigger(entity, iType, sOutput, iType != BossTrigger_Hurt && !Config.bMultiTrigger);
+
+				if (g_cvVerboseLog.IntValue > 0)
+					LogMessage("Hooked %s %s:%s", g_sTriggerKeys[iType], sTrigger, sOutput);
+			}
 		}
 	}
 }

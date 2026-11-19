@@ -28,7 +28,7 @@ public Action Command_IsConfigLoaded(int client, int args)
 
 public Action Command_ReloadConfig(int client, int args)
 {
-	Config_Load();
+	Config_Load(true);
 	ReplyToCommand(client, CONSOLE_PREFIX ... "%t", "Config Reloaded");
 	return Plugin_Handled;
 }
@@ -69,7 +69,8 @@ bool Config_FindFile(char[] sPath, int iMaxLen)
 	return false;
 }
 
-void Config_Load()
+// bHookExisting: hook the triggers of the entities that already exist (late load, reload)
+void Config_Load(bool bHookExisting = false)
 {
 	// Bosses keep a reference to their config, they are removed with it
 	Bosses_Cleanup();
@@ -132,6 +133,9 @@ void Config_Load()
 	}
 
 	Bosses_Reset();
+
+	if (bHookExisting)
+		Triggers_HookExisting();
 }
 
 // Parses the current section, returns null (and logs why) when it is invalid

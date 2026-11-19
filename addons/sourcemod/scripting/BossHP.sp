@@ -96,7 +96,9 @@ public void OnPluginStart()
 
 public void OnConfigsExecuted()
 {
-	Config_Load();
+	// Also called after a late load: the entities of the map already exist
+	Config_Load(g_bLate);
+	g_bLate = false;
 }
 
 public void OnMapStart()
