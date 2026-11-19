@@ -1,6 +1,11 @@
 // Boss lifecycle: a trigger adds the boss, it is initialized once its entities exist,
 // then processed every frame until it dies or is removed
 
+// Boss whose death is being notified (top hits, BossHP_OnBossDead). It is already out of g_aBoss,
+// so an error during the notification cannot leave it in the list, where it would die again on
+// every frame. IsBossEntity still finds it, so the natives keep working for it.
+CBoss g_DyingBoss = view_as<CBoss>(null);
+
 void Bosses_Cleanup()
 {
 	if (g_aBoss)
@@ -12,6 +17,9 @@ void Bosses_Cleanup()
 		}
 		delete g_aBoss;
 	}
+
+	// Left there by an error during the notification of its death
+	delete g_DyingBoss;
 
 	delete g_aHadOnce;
 }
@@ -62,6 +70,7 @@ CBoss BossAdd(CConfig Config, int entity)
 void BossRemove(int iIndex, const char[] sReason, bool bDead)
 {
 	CBoss Boss = g_aBoss.Get(iIndex);
+	g_aBoss.Erase(iIndex);
 
 	if (g_cvVerboseLog.IntValue > 0)
 	{
@@ -72,16 +81,22 @@ void BossRemove(int iIndex, const char[] sReason, bool bDead)
 
 	if (bDead)
 	{
+		g_DyingBoss = Boss;
+
 		Hits_OnBossDead(Boss);
 		CreateForward_OnBossDead(Boss);
+
+		g_DyingBoss = view_as<CBoss>(null);
 	}
 
 	delete Boss;
-	g_aBoss.Erase(iIndex);
 }
 
 void Bosses_OnGameFrame()
 {
+	// The death of a boss is notified within BossRemove: one still there was left by an error
+	delete g_DyingBoss;
+
 	if (!g_aBoss || g_aBoss.Length <= 0)
 		return;
 
@@ -214,6 +229,12 @@ bool IsBossEntity(int entity, CBoss &Boss = view_as<CBoss>(null))
 			Boss = _Boss;
 			return true;
 		}
+	}
+
+	if (g_DyingBoss && (g_DyingBoss.iEntity == entity || IsBossHealthEntity(g_DyingBoss, entity)))
+	{
+		Boss = g_DyingBoss;
+		return true;
 	}
 
 	return false;
