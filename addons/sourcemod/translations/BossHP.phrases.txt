@@ -9,6 +9,12 @@
 		"de"    "[BossHP]"
 		"pt"    "[BossHP]"
 		"chi"   "[BossHP]"
+		"pl"    "[BossHP]"
+		"tr"    "[BossHP]"
+		"it"    "[BossHP]"
+		"ua"    "[BossHP]"
+		"zho"   "[BossHP]"
+		"cze"   "[BossHP]"
 	}
 	"Map Supported"
 	{
@@ -19,6 +25,12 @@
 		"de"    "Die aktuelle Map wird von diesem Plugin unterstützt."
 		"pt"    "O mapa atual é suportado por este plugin."
 		"chi"   "当前地图受此插件支持。"
+		"pl"    "Aktualna mapa jest obsługiwana przez ten plugin."
+		"tr"    "Mevcut harita bu eklenti tarafından destekleniyor."
+		"it"    "La mappa attuale è supportata da questo plugin."
+		"ua"    "Поточна карта підтримується цим плагіном."
+		"zho"   "目前的地圖受此外掛支援。"
+		"cze"   "Aktuální mapa je tímto pluginem podporována."
 	}
 	"Config Not Loaded"
 	{
@@ -29,6 +41,12 @@
 		"de"    "Die Map-Konfigurationsdatei ist {red}nicht geladen."
 		"pt"    "O arquivo de configuração do mapa {red}não está carregado."
 		"chi"   "地图配置文件{red}未加载。"
+		"pl"    "Plik konfiguracji mapy {red}nie został załadowany."
+		"tr"    "Harita yapılandırma dosyası {red}yüklenmedi."
+		"it"    "Il file di configurazione della mappa {red}non è caricato."
+		"ua"    "Файл конфігурації карти {red}не завантажено."
+		"zho"   "地圖設定檔{red}未載入。"
+		"cze"   "Konfigurační soubor mapy {red}není načten."
 	}
 	"Config Loaded"
 	{
@@ -39,6 +57,12 @@
 		"de"    "Die Map-Konfigurationsdatei ist {green}geladen."
 		"pt"    "O arquivo de configuração do mapa {green}está carregado."
 		"chi"   "地图配置文件{green}已加载。"
+		"pl"    "Plik konfiguracji mapy {green}został załadowany."
+		"tr"    "Harita yapılandırma dosyası {green}yüklendi."
+		"it"    "Il file di configurazione della mappa {green}è caricato."
+		"ua"    "Файл конфігурації карти {green}завантажено."
+		"zho"   "地圖設定檔{green}已載入。"
+		"cze"   "Konfigurační soubor mapy {green}je načten."
 	}
 	"Config Loaded With Errors"
 	{
@@ -49,6 +73,12 @@
 		"de"    "Die Map-Konfigurationsdatei ist {green}geladen{fullred}, enthält aber Fehler."
 		"pt"    "O arquivo de configuração do mapa está {green}carregado{fullred}, mas tem erros."
 		"chi"   "地图配置文件{green}已加载{fullred}，但有错误。"
+		"pl"    "Plik konfiguracji mapy został {green}załadowany{fullred}, ale zawiera błędy."
+		"tr"    "Harita yapılandırma dosyası {green}yüklendi{fullred}, ancak hatalar içeriyor."
+		"it"    "Il file di configurazione della mappa è {green}caricato{fullred}, ma contiene errori."
+		"ua"    "Файл конфігурації карти {green}завантажено{fullred}, але він містить помилки."
+		"zho"   "地圖設定檔{green}已載入{fullred}，但有錯誤。"
+		"cze"   "Konfigurační soubor mapy je {green}načten{fullred}, ale obsahuje chyby."
 	}
 	"Current Config"
 	{
@@ -60,6 +90,12 @@
 		"de"    "Aktuelle Konfiguration: {olive}{1}"
 		"pt"    "Configuração atual: {olive}{1}"
 		"chi"   "当前配置：{olive}{1}"
+		"pl"    "Aktualna konfiguracja: {olive}{1}"
+		"tr"    "Mevcut yapılandırma: {olive}{1}"
+		"it"    "Configurazione attuale: {olive}{1}"
+		"ua"    "Поточна конфігурація: {olive}{1}"
+		"zho"   "目前設定：{olive}{1}"
+		"cze"   "Aktuální konfigurace: {olive}{1}"
 	}
 	"Config Reloaded"
 	{
@@ -70,5 +106,11 @@
 		"de"    "Die Map-Konfigurationsdatei wurde neu geladen."
 		"pt"    "O arquivo de configuração do mapa foi recarregado."
 		"chi"   "地图配置文件已重新加载。"
+		"pl"    "Plik konfiguracji mapy został przeładowany."
+		"tr"    "Harita yapılandırma dosyası yeniden yüklendi."
+		"it"    "Il file di configurazione della mappa è stato ricaricato."
+		"ua"    "Файл конфігурації карти перезавантажено."
+		"zho"   "地圖設定檔已重新載入。"
+		"cze"   "Konfigurační soubor mapy byl znovu načten."
 	}
 }
