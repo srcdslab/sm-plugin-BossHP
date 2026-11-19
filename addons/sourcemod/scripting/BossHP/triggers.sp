@@ -66,12 +66,14 @@ void HookTrigger(int entity, BossTrigger iType, const char[] sOutput, bool bOnce
 {
 	if (strcmp(sOutput, "OnTakeDamage", false) == 0)
 	{
+		// The hurttrigger uses the pre hook: a func_breakable broken by the hit is removed, and
+		// its hooks with it, before the post hook runs, so the hit that kills it was never counted
 		switch (iType)
 		{
 			case BossTrigger_Spawn: SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostSpawn);
 			case BossTrigger_Show: SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostShow);
 			case BossTrigger_Kill: SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostKill);
-			case BossTrigger_Hurt: SDKHook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostHurt);
+			case BossTrigger_Hurt: SDKHook(entity, SDKHook_OnTakeDamage, OnTakeDamageHurt);
 		}
 		return;
 	}
@@ -93,7 +95,7 @@ void UnhookTriggerDamage(int entity, BossTrigger iType)
 		case BossTrigger_Spawn: SDKUnhook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostSpawn);
 		case BossTrigger_Show: SDKUnhook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostShow);
 		case BossTrigger_Kill: SDKUnhook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostKill);
-		case BossTrigger_Hurt: SDKUnhook(entity, SDKHook_OnTakeDamagePost, OnTakeDamagePostHurt);
+		case BossTrigger_Hurt: SDKUnhook(entity, SDKHook_OnTakeDamage, OnTakeDamageHurt);
 	}
 }
 
@@ -190,9 +192,17 @@ public void OnTakeDamagePostKill(int victim, int attacker, int inflictor, float 
 	OnTriggerFired(BossTrigger_Kill, victim, "OnTakeDamage", attacker, damage, true);
 }
 
-public void OnTakeDamagePostHurt(int victim, int attacker, int inflictor, float damage, int damagetype)
+// Pre hook (see HookTrigger): the damage is not applied yet, the hit that breaks the entity only
+// counts the health it had left
+public Action OnTakeDamageHurt(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
-	OnTriggerFired(BossTrigger_Hurt, victim, "OnTakeDamage", attacker, damage, true);
+	float fDamage = damage;
+	int iHealth = GetEntProp(victim, Prop_Data, "m_iHealth");
+	if (iHealth > 0 && fDamage > float(iHealth))
+		fDamage = float(iHealth);
+
+	OnTriggerFired(BossTrigger_Hurt, victim, "OnTakeDamage", attacker, fDamage, true);
+	return Plugin_Continue;
 }
 
 // A point_template spawned by an env_entity_maker fires the "OnEntitySpawned" trigger of the template
