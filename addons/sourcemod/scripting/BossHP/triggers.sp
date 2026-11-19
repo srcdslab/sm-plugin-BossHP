@@ -194,6 +194,10 @@ void Triggers_HookTemplate(CConfig Config, int iTemplateNum)
 		int entity = INVALID_ENT_REFERENCE;
 		while ((entity = FindEntityByTargetname(entity, sTrigger)) != INVALID_ENT_REFERENCE)
 		{
+			// The instance may already be hooked: the boss of a config reload takes the first free
+			// instance, which an older boss hooked before the reload. A trigger fires for every
+			// config that matches it, so one hook per instance is enough.
+			UnhookTrigger(entity, iType, sOutput);
 			HookTrigger(entity, iType, sOutput, iType != BossTrigger_Hurt);
 
 			if (g_cvVerboseLog.IntValue > 0)
