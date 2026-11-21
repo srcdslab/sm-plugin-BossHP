@@ -35,6 +35,8 @@ public Action Command_ReloadConfig(int client, int args)
 
 void Config_Cleanup()
 {
+	Triggers_DeleteIndex();
+
 	if (!g_aConfig)
 		return;
 
@@ -131,6 +133,8 @@ void Config_Load(bool bHookExisting = false)
 		LogError("Empty mapconfig: \"%s\"", sConfigFile);
 		return;
 	}
+
+	Triggers_BuildIndex();
 
 	Bosses_Reset();
 
