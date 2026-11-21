@@ -289,6 +289,6 @@ g_aBoss = new ArrayList();  // Recreate immediately
 
 ## Version Information
 
-- Current version defined in BossHP.inc: "1.6.0"
+- Current version defined in BossHP.inc: "2.0.1"
 - Uses semantic versioning (MAJOR.MINOR.PATCH)
 - Version checks available via BossHP_VERSION constant
