@@ -54,6 +54,136 @@ bool MatchTrigger(const char[] sTrigger, const char[] sTargetname, int iHammerID
 	return sTargetname[0] && strcmp(sTargetname, sTrigger, false) == 0;
 }
 
+// #### ##    ## ########  ######## ##     ##
+//  ##  ###   ## ##     ## ##        ##   ##
+//  ##  ####  ## ##     ## ##         ## ##
+//  ##  ## ## ## ##     ## ######      ###
+//  ##  ##  #### ##     ## ##         ## ##
+//  ##  ##   ### ##     ## ##        ##   ##
+// #### ##    ## ########  ######## ##     ##
+
+// Slot of g_smTriggerIndex holding the triggers of every type, for Triggers_HookEntity
+#define TRIGGER_INDEX_ALL	view_as<int>(BossTrigger_Count)
+
+// Config indexes by trigger: one map per trigger type, plus one for all types together. Key
+// "h<Hammer ID>" or "n<lowercase targetname>" -> indexes of the configs with that trigger, in config
+// order. Built with g_aConfig: Triggers_HookEntity runs for every spawned entity and OnTriggerFired
+// on every hit on a boss, and reading every config there (StringMap reads and string compares)
+// added up on maps with many configs.
+StringMap g_smTriggerIndex[TRIGGER_INDEX_ALL + 1];
+
+// Fills g_smTriggerIndex from g_aConfig
+void Triggers_BuildIndex()
+{
+	Triggers_DeleteIndex();
+
+	for (int iSlot = 0; iSlot <= TRIGGER_INDEX_ALL; iSlot++)
+		g_smTriggerIndex[iSlot] = new StringMap();
+
+	int iConfigs = g_aConfig.Length;
+
+	// Same 64 cell buffers as MatchTrigger's callers
+	char sTrigger[64], sOutput[64], sKey[72];
+
+	for (int i = 0; i < iConfigs; i++)
+	{
+		CConfig Config = g_aConfig.Get(i);
+
+		for (BossTrigger iType = BossTrigger_Spawn; iType < BossTrigger_Count; iType++)
+		{
+			if (!GetConfigTrigger(Config, iType, sTrigger, sizeof(sTrigger), sOutput, sizeof(sOutput)))
+				continue;
+
+			// MatchTrigger compares "#<id>" with the Hammer ID only, a name with the targetname only
+			if (sTrigger[0] == '#')
+				FormatEx(sKey, sizeof(sKey), "h%d", StringToInt(sTrigger[1]));
+			else
+				TriggerNameKey(sTrigger, sKey, sizeof(sKey));
+
+			AddTriggerIndex(view_as<int>(iType), sKey, i, iConfigs);
+			AddTriggerIndex(TRIGGER_INDEX_ALL, sKey, i, iConfigs);
+		}
+	}
+}
+
+void Triggers_DeleteIndex()
+{
+	for (int iSlot = 0; iSlot <= TRIGGER_INDEX_ALL; iSlot++)
+		delete g_smTriggerIndex[iSlot];
+}
+
+void AddTriggerIndex(int iSlot, const char[] sKey, int iConfig, int iConfigs)
+{
+	int[] iList = new int[iConfigs];
+	int iSize = 0;
+	g_smTriggerIndex[iSlot].GetArray(sKey, iList, iConfigs, iSize);
+
+	// Configs come in order: a config with two triggers on the same key is already the last one
+	if (iSize > 0 && iList[iSize - 1] == iConfig)
+		return;
+
+	iList[iSize++] = iConfig;
+	g_smTriggerIndex[iSlot].SetArray(sKey, iList, iSize);
+}
+
+// "n" followed by the targetname in lowercase (MatchTrigger compares targetnames ignoring case)
+void TriggerNameKey(const char[] sName, char[] sKey, int iKeySize)
+{
+	sKey[0] = 'n';
+
+	// ASCII lowercase like strcmp(..., false), with plain arithmetic: CharToLower() calls a native per character
+	int i;
+	for (i = 0; sName[i] != '\0' && i + 1 < iKeySize - 1; i++)
+	{
+		int c = sName[i];
+		sKey[i + 1] = ('A' <= c <= 'Z') ? c + ('a' - 'A') : c;
+	}
+
+	sKey[i + 1] = '\0';
+}
+
+// Fills iCandidates with the indexes of the configs that have a trigger in this slot (a BossTrigger,
+// or TRIGGER_INDEX_ALL) with this Hammer ID or this targetname, in config order, and returns how
+// many. It only narrows the configs down: the callers still run all their checks on each of them.
+int GetTriggerCandidates(int iSlot, const char[] sTargetname, int iHammerID, int[] iCandidates)
+{
+	if (!g_aConfig || !g_smTriggerIndex[iSlot])
+		return 0;
+
+	int iConfigs = g_aConfig.Length;
+	int[] iList = new int[iConfigs];
+	int[] iNameList = new int[iConfigs];
+	int iSize = 0, iNameSize = 0;
+
+	char sKey[72];
+	FormatEx(sKey, sizeof(sKey), "h%d", iHammerID);
+	g_smTriggerIndex[iSlot].GetArray(sKey, iList, iConfigs, iSize);
+
+	// MatchTrigger never matches an empty targetname
+	if (sTargetname[0])
+	{
+		TriggerNameKey(sTargetname, sKey, sizeof(sKey));
+		g_smTriggerIndex[iSlot].GetArray(sKey, iNameList, iConfigs, iNameSize);
+	}
+
+	// Merge the two sorted lists, a config in both is kept once
+	int iCount = 0, a = 0, b = 0;
+	while (a < iSize || b < iNameSize)
+	{
+		if (b >= iNameSize || (a < iSize && iList[a] < iNameList[b]))
+			iCandidates[iCount++] = iList[a++];
+		else if (a >= iSize || iNameList[b] < iList[a])
+			iCandidates[iCount++] = iNameList[b++];
+		else
+		{
+			iCandidates[iCount++] = iList[a++];
+			b++;
+		}
+	}
+
+	return iCount;
+}
+
 // ##     ##  #######   #######  ##    ##  ######
 // ##     ## ##     ## ##     ## ##   ##  ##    ##
 // ##     ## ##     ## ##     ## ##  ##   ##
@@ -149,11 +279,14 @@ void Triggers_HookEntity(int entity, bool bRehook)
 
 	int iHammerID = GetEntProp(entity, Prop_Data, "m_iHammerID");
 
+	int[] iCandidates = new int[g_aConfig.Length];
+	int iCandidateCount = GetTriggerCandidates(TRIGGER_INDEX_ALL, sTargetname, iHammerID, iCandidates);
+
 	for (int iPass = bRehook ? 0 : 1; iPass < 2; iPass++)
 	{
-		for (int i = 0; i < g_aConfig.Length; i++)
+		for (int c = 0; c < iCandidateCount; c++)
 		{
-			CConfig Config = g_aConfig.Get(i);
+			CConfig Config = g_aConfig.Get(iCandidates[c]);
 
 			for (BossTrigger iType = BossTrigger_Spawn; iType < BossTrigger_Count; iType++)
 			{
@@ -309,8 +442,12 @@ void OnTriggerFired(BossTrigger iType, int entity, const char[] output, int acti
 	if (iType != BossTrigger_Spawn)
 		iTemplateNum = SplitTemplateName(sTargetname);
 
-	for (int i = 0; i < g_aConfig.Length; i++)
+	int[] iCandidates = new int[g_aConfig.Length];
+	int iCandidateCount = GetTriggerCandidates(view_as<int>(iType), sTargetname, iHammerID, iCandidates);
+
+	for (int c = 0; c < iCandidateCount; c++)
 	{
+		int i = iCandidates[c];
 		CConfig Config = g_aConfig.Get(i);
 
 		char sTrigger[64], sOutput[64];
