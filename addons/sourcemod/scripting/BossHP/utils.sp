@@ -48,7 +48,10 @@ int FindEntityByTargetname(int entity, const char[] sTargetname, const char[] sC
 			if (GetEntPropString(entity, Prop_Data, "m_iName", sTargetnameBuf, sizeof(sTargetnameBuf)) <= 0)
 				continue;
 
-			if (strncmp(sTargetnameBuf, sTargetname, Wildcard) == 0)
+			// Case-insensitive like the engine, which pools names case-insensitively: the first
+			// spelling in the BSP wins, so ze_dreamin_v3_1_css names "HPCounter2" "hpcounter2"
+			// (an output spells it so first) and a case-sensitive compare never found it.
+			if (strncmp(sTargetnameBuf, sTargetname, Wildcard, false) == 0)
 				return entity;
 		}
 	}
