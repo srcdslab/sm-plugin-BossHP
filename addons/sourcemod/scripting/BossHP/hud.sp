@@ -467,11 +467,27 @@ bool IsMathCounter(int entity)
 	return strcmp(sClassname, "math_counter", false) == 0;
 }
 
+// A math_counter with min == max has no limit to count towards: it stores a value, it is no health.
+// The engine only gives OutValue a type in Spawn when min or max is set, or from the startvalue key,
+// so a counter with neither keeps an untyped OutValue until its first input, and reading it throws
+// "m_OutValue value is not a float (0)": 62 errors on Z.ESCAPE from 22 to 27/11/2026, from
+// counter2 (ze_alien_shooter2_revisited_v2_4), Boss_Health_backup1 (ze_chosen_ones_b1),
+// overlay_framemath (ze_santassination_css2) and madara_appear_counter (ze_uchiha_legacy_v1_3f).
+bool HasCounterRange(int entity)
+{
+	return GetEntPropFloat(entity, Prop_Data, "m_flMin") != GetEntPropFloat(entity, Prop_Data, "m_flMax");
+}
+
 int GetEntityHealthValue(int entity)
 {
 	int iHealth;
 	if (IsMathCounter(entity))
+	{
+		if (!HasCounterRange(entity))
+			return 0;
+
 		iHealth = GetCounterHealth(entity, IsCounterReverse(entity));
+	}
 	else
 		iHealth = GetEntProp(entity, Prop_Data, "m_iHealth");
 
